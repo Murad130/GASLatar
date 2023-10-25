@@ -13,5 +13,8 @@ UCLASS()
 class GASLATAR_API ABorshCharacter : public ABorshCharacterBase
 {
 	GENERATED_BODY()
-	
+
+public:
+	ABorshCharacter();
+
 };
