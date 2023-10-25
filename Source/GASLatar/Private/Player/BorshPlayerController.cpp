@@ -3,12 +3,83 @@
 
 #include "Player/BorshPlayerController.h"
 #include <EnhancedInputComponent.h>
+#include <Interaction/EnemyInterface.h>
 #include <EnhancedInputSubsystems.h>
+
 
 
 ABorshPlayerController::ABorshPlayerController()
 {
 	bReplicates = true;
+}
+
+void ABorshPlayerController::PlayerTick(float DeltaTime)
+{
+	Super::PlayerTick(DeltaTime);
+
+	CursorTrace();
+}
+
+void ABorshPlayerController::CursorTrace()
+{
+	FHitResult CursorHit;
+	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+	if (!CursorHit.bBlockingHit) return;
+
+	LastActor = ThisActor;
+	ThisActor = Cast<IEnemyInterface>(CursorHit.GetActor());
+
+	/**
+	* Line trace frim cursor, There are several scenarios:
+	* 
+	* A. LastActor is null && ThisActor is null
+	*	- Do nothing
+	* B. LastActor is null && ThisActor is valid
+	*	- Call Highlight ThisActor
+	* C. LastActor is valid && ThisActor is null
+	*	- Call UnHighlight LastActor
+	* D. Both actors are valid, but LastActor != ThisActor
+	*	- Call UnHighlight LastActor and Call Highlight ThisActor
+	* E. Both actors are valid, but are the same actor
+	*	- Do nothing
+	*/
+
+	if (LastActor == nullptr)
+	{
+		if (ThisActor != nullptr)
+		{
+			// Case B
+			ThisActor->HighlightActor();
+		}
+		else
+		{
+			// Case A - both are null, do nothing 
+
+		}
+	}
+	else // LastActor is valid
+	{
+		if (ThisActor == nullptr)
+		{
+			// Case C
+			LastActor->UnHighlightActor();
+		}
+		else // both actors are valid
+		{
+			if (LastActor != ThisActor)
+			{
+				// Case D
+				LastActor->UnHighlightActor();
+				ThisActor->HighlightActor();
+			}
+			else
+			{
+				// Case E - do nothing 
+
+			}
+
+		}
+	}
 }
 
 void ABorshPlayerController::BeginPlay()
@@ -57,3 +128,5 @@ void ABorshPlayerController::Move(const FInputActionValue& InputActionValue)
 
 	}
 }
+
+
