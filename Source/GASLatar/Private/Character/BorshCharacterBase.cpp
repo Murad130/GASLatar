@@ -13,6 +13,11 @@ ABorshCharacterBase::ABorshCharacterBase()
 
 }
 
+UAbilitySystemComponent* ABorshCharacterBase::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
 
 void ABorshCharacterBase::BeginPlay()
 {

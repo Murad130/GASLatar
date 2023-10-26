@@ -3,10 +3,16 @@
 
 #include "Character/EnemyCharacter.h"
 #include "GASLatar/GASLatar.h"
+#include <AbilitySystem/BorshAbilitySystemComponent.h>
 
 AEnemyCharacter::AEnemyCharacter()
 {
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+
+	AbilitySystemComponent = CreateDefaultSubobject<UBorshAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
+
+	AttributeSet = CreateDefaultSubobject<UAttributeSet>("AttributeSet");
 }
 
 void AEnemyCharacter::HighlightActor()
