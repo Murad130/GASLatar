@@ -8,6 +8,8 @@ ABorshPlayerState::ABorshPlayerState()
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UBorshAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+
 
 	AttributeSet = CreateDefaultSubobject<UAttributeSet>("AttributeSet");
 
