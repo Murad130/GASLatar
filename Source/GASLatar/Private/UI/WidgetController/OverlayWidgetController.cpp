@@ -10,6 +10,6 @@ void UOverlayWidgetController::BroadcastInitialValues()
 
 	OnHealthChanged.Broadcast(BorshAttributeSet->GetHealth());
 	OnMaxHealthChanged.Broadcast(BorshAttributeSet->GetMaxHealth());
-
+	
 }
  

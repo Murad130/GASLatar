@@ -16,11 +16,8 @@ class GASLATAR_API ABorshCharacter : public ABorshCharacterBase
 
 public:
 	ABorshCharacter();
-
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
-
 private:
 	void InitAbilityActorInfo();
-
 };

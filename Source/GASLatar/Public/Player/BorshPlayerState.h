@@ -22,7 +22,6 @@ public:
 	ABorshPlayerState();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	UAttributeSet* GetAttributeSet() const { return AttributeSet; }
-
 protected:
 
 	UPROPERTY()

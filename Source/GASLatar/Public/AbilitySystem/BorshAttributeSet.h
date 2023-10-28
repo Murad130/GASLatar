@@ -44,10 +44,13 @@ public:
 
 	UFUNCTION()
 		void OnRep_Health(const FGameplayAttributeData& OldHealth) const;
+
 	UFUNCTION()
 		void OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const;
+
 	UFUNCTION()
 		void OnRep_Mana(const FGameplayAttributeData& OldMana) const;
+
 	UFUNCTION()
 		void OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const;
 

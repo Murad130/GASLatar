@@ -1,12 +1,10 @@
-// Copyright Latar
-
 
 #include "Actor/BorshEffectActor.h"
-#include "Components/SphereComponent.h"
-#include "AbilitySystemInterface.h"
+
 #include "AbilitySystemComponent.h"
-#include "Components/PrimitiveComponent.h"
+#include "AbilitySystemInterface.h"
 #include "AbilitySystem/BorshAttributeSet.h"
+#include "Components/SphereComponent.h"
 
 ABorshEffectActor::ABorshEffectActor()
 {
@@ -17,12 +15,12 @@ ABorshEffectActor::ABorshEffectActor()
 
 	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
 	Sphere->SetupAttachment(GetRootComponent());
-
 }
 
 void ABorshEffectActor::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	//TODO: Change this to apply a Gameplay Effect. For now, using const_cast as a hack!
 	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(OtherActor))
 	{
 		const UBorshAttributeSet* BorshAttributeSet = Cast<UBorshAttributeSet>(ASCInterface->GetAbilitySystemComponent()->GetAttributeSet(UBorshAttributeSet::StaticClass()));
@@ -45,6 +43,4 @@ void ABorshEffectActor::BeginPlay()
 
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABorshEffectActor::OnOverlap);
 	Sphere->OnComponentEndOverlap.AddDynamic(this, &ABorshEffectActor::EndOverlap);
-
 }
-

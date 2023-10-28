@@ -4,6 +4,7 @@
 #include "Character/EnemyCharacter.h"
 #include "GASLatar/GASLatar.h"
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
+#include <AbilitySystem/BorshAttributeSet.h>
 
 AEnemyCharacter::AEnemyCharacter()
 {
@@ -12,11 +13,9 @@ AEnemyCharacter::AEnemyCharacter()
 	AbilitySystemComponent = CreateDefaultSubobject<UBorshAbilitySystemComponent>("AbilitySystemComponent");
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Minimal);
-	
 
-	AttributeSet = CreateDefaultSubobject<UAttributeSet>("AttributeSet");
+	AttributeSet = CreateDefaultSubobject<UBorshAttributeSet>("AttributeSet");
 }
-
 void AEnemyCharacter::HighlightActor()
 {
 	GetMesh()->SetRenderCustomDepth(true);
@@ -24,7 +23,6 @@ void AEnemyCharacter::HighlightActor()
 	Weapon->SetRenderCustomDepth(true);
 	Weapon->SetCustomDepthStencilValue(CUSTOM_DEPTH_RED);
 }
-
 void AEnemyCharacter::UnHighlightActor()
 {
 	GetMesh()->SetRenderCustomDepth(false);
@@ -34,6 +32,5 @@ void AEnemyCharacter::UnHighlightActor()
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	check(AbilitySystemComponent);
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 }

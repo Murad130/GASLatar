@@ -3,6 +3,7 @@
 
 #include "Player/BorshPlayerState.h"
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
+#include <AbilitySystem/BorshAttributeSet.h>
 
 ABorshPlayerState::ABorshPlayerState()
 {
@@ -10,8 +11,7 @@ ABorshPlayerState::ABorshPlayerState()
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 
-
-	AttributeSet = CreateDefaultSubobject<UAttributeSet>("AttributeSet");
+	AttributeSet = CreateDefaultSubobject<UBorshAttributeSet>("AttributeSet");
 
 	NetUpdateFrequency = 100.f;
 }
@@ -20,4 +20,3 @@ UAbilitySystemComponent* ABorshPlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
-
