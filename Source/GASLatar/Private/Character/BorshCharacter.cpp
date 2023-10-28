@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include <Player/BorshPlayerState.h>
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
+#include <Player/BorshPlayerController.h>
+#include <UI/HUD/BorshHUD.h>
 
 ABorshCharacter::ABorshCharacter()
 {
@@ -44,4 +46,13 @@ void ABorshCharacter::InitAbilityActorInfo()
 	BorshPlayerState->GetAbilitySystemComponent()->InitAbilityActorInfo(BorshPlayerState, this);
 	AbilitySystemComponent = BorshPlayerState->GetAbilitySystemComponent();
 	AttributeSet = BorshPlayerState->GetAttributeSet();
+
+	if (ABorshPlayerController* BorshPlayerController = Cast<ABorshPlayerController>(GetController()))
+	{
+		if (ABorshHUD* BorshHUD = Cast<ABorshHUD>(BorshPlayerController->GetHUD()))
+		{
+			BorshHUD->InitOverlay(BorshPlayerController, BorshPlayerState, AbilitySystemComponent, AttributeSet);
+		}
+	}
+	
 }

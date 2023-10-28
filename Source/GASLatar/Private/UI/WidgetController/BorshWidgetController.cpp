@@ -10,3 +10,8 @@ void UBorshWidgetController::SetWidgetControllerParams(const FWidgetControllerPa
 	AbilitySystemComponent = WCParams.AbilitySystemComponent;
 	AttributeSet = WCParams.AttributeSet;
 }
+
+void UBorshWidgetController::BroadcastInitialValues()
+{
+
+}
