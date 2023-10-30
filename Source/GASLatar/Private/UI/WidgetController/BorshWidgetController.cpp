@@ -15,3 +15,7 @@ void UBorshWidgetController::BroadcastInitialValues()
 {
 
 }
+
+void UBorshWidgetController::BindCallbacksToDependencies()
+{
+}

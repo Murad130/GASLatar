@@ -12,4 +12,25 @@ void UOverlayWidgetController::BroadcastInitialValues()
 	OnMaxHealthChanged.Broadcast(BorshAttributeSet->GetMaxHealth());
 	
 }
+
+void UOverlayWidgetController::BindCallbacksToDependencies()
+{
+	const UBorshAttributeSet* BorshAttributeSet = CastChecked<UBorshAttributeSet>(AttributeSet);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		BorshAttributeSet->GetHealthAttribute()).AddUObject(this, &UOverlayWidgetController::HealthChanged);
+
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+		BorshAttributeSet->GetMaxHealthAttribute()).AddUObject(this, &UOverlayWidgetController::MaxHealthChanged);
+}
+
+void UOverlayWidgetController::HealthChanged(const FOnAttributeChangeData& Data) const
+{
+	OnHealthChanged.Broadcast(Data.NewValue);
+}
+
+void UOverlayWidgetController::MaxHealthChanged(const FOnAttributeChangeData& Data) const
+{
+	OnMaxHealthChanged.Broadcast(Data.NewValue);
+}
  
