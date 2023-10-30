@@ -27,6 +27,7 @@ void ABorshEffectActor::OnOverlap(UPrimitiveComponent* OverlappedComponent, AAct
 
 		UBorshAttributeSet* MutableBorshAttributeSet = const_cast<UBorshAttributeSet*>(BorshAttributeSet);
 		MutableBorshAttributeSet->SetHealth(BorshAttributeSet->GetHealth() + 25.f);
+		MutableBorshAttributeSet->SetMana(BorshAttributeSet->GetMana() - 25.f);
 		Destroy();
 	}
 }

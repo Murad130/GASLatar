@@ -88,8 +88,6 @@ void ABorshPlayerController::BeginPlay()
 	check(BorshContext);
 
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer());
-	check(Subsystem);
-	Subsystem->AddMappingContext(BorshContext, 0);
 	if (Subsystem)
 	{
 		Subsystem->AddMappingContext(BorshContext, 0);
