@@ -1,6 +1,7 @@
 
 #include "Actor/BorshEffectActor.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystem/BorshAttributeSet.h"
@@ -10,38 +11,25 @@ ABorshEffectActor::ABorshEffectActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-	SetRootComponent(Mesh);
-
-	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
-	Sphere->SetupAttachment(GetRootComponent());
-}
-
-void ABorshEffectActor::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	//TODO: Change this to apply a Gameplay Effect. For now, using const_cast as a hack!
-	if (IAbilitySystemInterface* ASCInterface = Cast<IAbilitySystemInterface>(OtherActor))
-	{
-		const UBorshAttributeSet* BorshAttributeSet = Cast<UBorshAttributeSet>(ASCInterface->GetAbilitySystemComponent()->GetAttributeSet(UBorshAttributeSet::StaticClass()));
-
-		UBorshAttributeSet* MutableBorshAttributeSet = const_cast<UBorshAttributeSet*>(BorshAttributeSet);
-		MutableBorshAttributeSet->SetHealth(BorshAttributeSet->GetHealth() + 25.f);
-		MutableBorshAttributeSet->SetMana(BorshAttributeSet->GetMana() - 25.f);
-		Destroy();
-	}
-}
-
-void ABorshEffectActor::EndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
+	SetRootComponent(CreateDefaultSubobject<USceneComponent>("SceneRoot"));
 
 }
+
+
 
 void ABorshEffectActor::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
-	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABorshEffectActor::OnOverlap);
-	Sphere->OnComponentEndOverlap.AddDynamic(this, &ABorshEffectActor::EndOverlap);
+void ABorshEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGameplayEffect> GameplayEffectClass)
+{
+	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
+	if (TargetASC == nullptr) return;
+
+	check(GameplayEffectClass);
+	FGameplayEffectContextHandle EffectContextHandle = TargetASC->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(this);
+	const FGameplayEffectSpecHandle EffectSpecHandle = TargetASC->MakeOutgoingSpec(GameplayEffectClass, 1.f, EffectContextHandle);
+	TargetASC->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
 }

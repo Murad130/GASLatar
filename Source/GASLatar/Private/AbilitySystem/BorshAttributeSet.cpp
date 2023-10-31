@@ -9,7 +9,7 @@ UBorshAttributeSet::UBorshAttributeSet()
 	InitHealth(50.f);
 	InitMaxHealth(100.f);
 	InitMana(50.f);
-	InitMaxMana(50.f);
+	InitMaxMana(100.f);
 }
 
 void UBorshAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
