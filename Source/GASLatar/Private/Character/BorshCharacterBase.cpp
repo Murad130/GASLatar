@@ -22,3 +22,8 @@ void ABorshCharacterBase::BeginPlay()
 	Super::BeginPlay();
 
 }
+
+void ABorshCharacterBase::InitAbilityActorInfo()
+{
+
+}
