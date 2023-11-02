@@ -6,6 +6,9 @@
 #include "AbilitySystemComponent.h"
 #include "BorshAbilitySystemComponent.generated.h"
 
+// delegate for broadcasting the asset tags.
+DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /*AssetTags*/);
+
 /**
  * 
  */
@@ -16,6 +19,8 @@ class GASLATAR_API UBorshAbilitySystemComponent : public UAbilitySystemComponent
 	
 public:
 	void AbilityActorInfoSet();
+
+	FEffectAssetTags EffectAssetTags;
 
 protected:
 	void EffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle);
