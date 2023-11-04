@@ -35,6 +35,11 @@
 		{
 			"Name": "GameplayAbilities",
 			"Enabled": true
+		},
+		{
+			"Name": "Animate",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/b0edbcceb9aa4e57bae56fa12bfbccba"
 		}
 	]
 }

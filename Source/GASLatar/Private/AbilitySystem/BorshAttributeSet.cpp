@@ -10,20 +10,38 @@
 
 UBorshAttributeSet::UBorshAttributeSet()
 {
-	InitHealth(50.f);
-	InitMaxHealth(100.f);
+	InitHealth(10.f);
 	InitMana(50.f);
-	InitMaxMana(100.f);
 }
 
 void UBorshAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	/*********************************************Primary************************************************************/
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Strength, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Intelligence, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Resilience, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Vigor, COND_None, REPNOTIFY_Always);
+
+	/*********************************************Secondary*********************************************************/
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Armor, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, ArmorPenetration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, BlockChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, CriticalHitChance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, CriticalHitDamage, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, CriticalHitResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, HealthRegeneration, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, ManaRegeneration, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
-	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+
+	/*********************************************Vital*********************************************************/
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Health, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, Mana, COND_None, REPNOTIFY_Always);
 }
 
 // Clamping Attributes to prevent them going above MaxValue or belove MinValue
@@ -37,6 +55,8 @@ void UBorshAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute,
 	if (Attribute == GetHealthAttribute())
 	{
 		// We are making sure that our health does not get past MaxHealth(ex: when we pick up a potion, crystal etc)
+		// but REMEMBER all this does is clamp what's returned from querying the modifier (this is not a legit set of the health attribute)
+		// We need to set in our PostGameplayEffectExecute function.
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
 
 	}
@@ -108,21 +128,98 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
+
+	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
+	{
+		// Setting the value to a clamped value(value from PreAttributeChange)
+		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+	}
+	if (Data.EvaluatedData.Attribute == GetManaAttribute())
+	{
+		// Setting the value to a clamped value(value from PreAttributeChange)
+		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
+	}
 }
+
+/*********************************************Vital*********************************************************/
 
 void UBorshAttributeSet::OnRep_Health(const FGameplayAttributeData& OldHealth) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Health, OldHealth);
 }
 
-void UBorshAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const
-{
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, MaxHealth, OldMaxHealth);
-}
-
 void UBorshAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldMana) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Mana, OldMana);
+}
+
+/*********************************************Primary************************************************************/
+
+void UBorshAttributeSet::OnRep_Strength(const FGameplayAttributeData& OldStrength) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Strength, OldStrength);
+}
+
+void UBorshAttributeSet::OnRep_Intelligence(const FGameplayAttributeData& OldIntelligence) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Intelligence, OldIntelligence);
+}
+
+void UBorshAttributeSet::OnRep_Resilience(const FGameplayAttributeData& OldResilience) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Resilience, OldResilience);
+}
+
+void UBorshAttributeSet::OnRep_Vigor(const FGameplayAttributeData& OldVigor) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Vigor, OldVigor);
+}
+
+/*********************************************Secondary*********************************************************/
+
+void UBorshAttributeSet::OnRep_Armor(const FGameplayAttributeData& OldArmor) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, Armor, OldArmor);
+}
+
+void UBorshAttributeSet::OnRep_ArmorPenetration(const FGameplayAttributeData& OldArmorPenetration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, ArmorPenetration, OldArmorPenetration);
+}
+
+void UBorshAttributeSet::OnRep_BlockChance(const FGameplayAttributeData& OldBlockChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, BlockChance, OldBlockChance);
+}
+
+void UBorshAttributeSet::OnRep_CriticalHitChance(const FGameplayAttributeData& OldCriticalHitChance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, CriticalHitChance, OldCriticalHitChance);
+}
+
+void UBorshAttributeSet::OnRep_CriticalHitDamage(const FGameplayAttributeData& OldCriticalHitDamage) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, CriticalHitDamage, OldCriticalHitDamage);
+}
+
+void UBorshAttributeSet::OnRep_CriticalHitResistance(const FGameplayAttributeData& OldCriticalHitResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, CriticalHitResistance, OldCriticalHitResistance);
+}
+
+void UBorshAttributeSet::OnRep_ManaRegeneration(const FGameplayAttributeData& OldManaRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, ManaRegeneration, OldManaRegeneration);
+}
+
+void UBorshAttributeSet::OnRep_HealthRegeneration(const FGameplayAttributeData& OldHealthRegeneration) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, HealthRegeneration, OldHealthRegeneration);
+}
+
+void UBorshAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHealth) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, MaxHealth, OldMaxHealth);
 }
 
 void UBorshAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const

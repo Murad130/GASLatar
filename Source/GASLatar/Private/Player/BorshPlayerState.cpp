@@ -4,6 +4,7 @@
 #include "Player/BorshPlayerState.h"
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
 #include <AbilitySystem/BorshAttributeSet.h>
+#include "Net/UnrealNetwork.h"
 
 ABorshPlayerState::ABorshPlayerState()
 {
@@ -16,7 +17,19 @@ ABorshPlayerState::ABorshPlayerState()
 	NetUpdateFrequency = 100.f;
 }
 
+void ABorshPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABorshPlayerState, Level);
+}
+
 UAbilitySystemComponent* ABorshPlayerState::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+
+void ABorshPlayerState::OnRep_Level(int32 OldLevel)
+{
+
 }

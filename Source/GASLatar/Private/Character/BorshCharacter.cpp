@@ -30,6 +30,14 @@ void ABorshCharacter::OnRep_PlayerState()
 	// Init ability actor info for the Client
 	InitAbilityActorInfo();
 }
+int32 ABorshCharacter::GetPlayerLevel()
+{
+	// Getting our PlayerState
+	const ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
+	check(BorshPlayerState);
+	return BorshPlayerState->GetPlayerLevel();
+
+}
 void ABorshCharacter::InitAbilityActorInfo()
 {
 	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
@@ -46,4 +54,6 @@ void ABorshCharacter::InitAbilityActorInfo()
 			BorshHUD->InitOverlay(BorshPlayerController, BorshPlayerState, AbilitySystemComponent, AttributeSet);
 		}
 	}
+	// We called our function. So now all that's left is to make sure that we have that effect and that we configure some default values (in Blueprint). 
+	InitializeDefaultAttributes();
 }
