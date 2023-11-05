@@ -35,7 +35,8 @@ void ABorshCharacterBase::ApplyEffectToSelf(TSubclassOf<UGameplayEffect> Gamepla
 	check(IsValid(GetAbilitySystemComponent()));
 	check(GameplayEffectClass);
 	// Making a context handle
-	const FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	FGameplayEffectContextHandle ContextHandle = GetAbilitySystemComponent()->MakeEffectContext();
+	ContextHandle.AddSourceObject(this);
 
 	// Making effect spec (Effect spec requires gameplay effect (here: GameplayEffectClass), level and a context handle)
 	const FGameplayEffectSpecHandle SpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level, ContextHandle);
@@ -55,5 +56,6 @@ void ABorshCharacterBase::InitializeDefaultAttributes() const
 {
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
+	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
 }
 
