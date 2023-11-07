@@ -22,8 +22,25 @@ public:
 	// We need a public function to initialize our tags. We want to be able to create those native Gameplay Tags
 	static void InitializeNativeGameplayTags();
 
-	// Variable to access armor 
+	/******************************************PRIMARY***************************************************/
+
+	FGameplayTag Attributes_Primary_Strength;
+	FGameplayTag Attributes_Primary_Intelligence;
+	FGameplayTag Attributes_Primary_Resilience;
+	FGameplayTag Attributes_Primary_Vigor;
+
+	/******************************************SECONDARY*************************************************/
+
 	FGameplayTag Attributes_Secondary_Armor;
+	FGameplayTag Attributes_Secondary_ArmorPenetration;
+	FGameplayTag Attributes_Secondary_BlockChance;
+	FGameplayTag Attributes_Secondary_CriticalHitChance;
+	FGameplayTag Attributes_Secondary_CriticalHitDamage;
+	FGameplayTag Attributes_Secondary_CriticalHitResistance;
+	FGameplayTag Attributes_Secondary_HealthRegeneration;
+	FGameplayTag Attributes_Secondary_ManaRegeneration;
+	FGameplayTag Attributes_Secondary_MaxHealth;
+	FGameplayTag Attributes_Secondary_MaxMana;
 
 protected:
 
