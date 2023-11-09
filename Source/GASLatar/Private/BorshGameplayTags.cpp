@@ -87,4 +87,36 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 		FString("Maximum amount of Mana obtainable")
 	);
 
+	/****************************************************INPUTTAGS*************************************************************/
+
+	GameplayTags.InputTag_LMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.LMB"),
+		FString("Input Tag for left Mouse Button")
+	);
+
+	GameplayTags.InputTag_RMB = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.RMB"),
+		FString("Input Tag for Right Mouse Button")
+	);
+
+	GameplayTags.InputTag_a = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.a"),
+		FString("Input Tag for a key")
+	);
+
+	GameplayTags.InputTag_z = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.z"),
+		FString("Input Tag for z key")
+	);
+
+	GameplayTags.InputTag_e = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.e"),
+		FString("Input Tag for e key")
+	);
+
+	GameplayTags.InputTag_r = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.r"),
+		FString("Input Tag for r key")
+	);
+
 }

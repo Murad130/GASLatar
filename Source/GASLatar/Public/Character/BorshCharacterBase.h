@@ -11,6 +11,7 @@
 class UAbilitySystemComponent;
 class UAttributeSet;
 class UGameplayEffect;
+class UGameplayAbility;
 
 UCLASS(Abstract)
 class GASLATAR_API ABorshCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
@@ -50,5 +51,12 @@ protected:
 
 	// Function to set our ApplyEffectToSelf
 	void InitializeDefaultAttributes() const;
+
+	void AddCharacterAbilities();
+
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Abilities")
+		TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 
 };

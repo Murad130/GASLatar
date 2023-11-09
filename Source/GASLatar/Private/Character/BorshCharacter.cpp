@@ -23,6 +23,8 @@ void ABorshCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 	// Init ability actor info for the Server
 	InitAbilityActorInfo();
+	// Adding Character Abilities
+	AddCharacterAbilities();
 }
 void ABorshCharacter::OnRep_PlayerState()
 {

@@ -3,6 +3,7 @@
 
 #include "Character/BorshCharacterBase.h"
 #include "AbilitySystemComponent.h"
+#include "AbilitySystem/BorshAbilitySystemComponent.h"
 
 
 ABorshCharacterBase::ABorshCharacterBase()
@@ -57,5 +58,19 @@ void ABorshCharacterBase::InitializeDefaultAttributes() const
 	ApplyEffectToSelf(DefaultPrimaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultSecondaryAttributes, 1.f);
 	ApplyEffectToSelf(DefaultVitalAttributes, 1.f);
+}
+
+void ABorshCharacterBase::AddCharacterAbilities()
+{
+	UBorshAbilitySystemComponent* BorshASC = CastChecked<UBorshAbilitySystemComponent>(AbilitySystemComponent);
+
+	// Only adds abilities on the server(not replicated)
+	// First we need to check for authority
+	if (!HasAuthority()) return;
+	// If we have authority, we'll call the function. But this means we need to access the ability system component and we're going to cast it.
+	
+	BorshASC->AddCharacterAbilities(StartupAbilities);
+
+	// So the question now is when do we call add character abilities (This function)? Well, a good place to call it is in possessed by.
 }
 

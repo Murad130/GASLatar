@@ -2,7 +2,10 @@
 
 
 #include "Player/BorshPlayerController.h"
-#include <EnhancedInputComponent.h>
+
+#include "AbilitySystemBlueprintLibrary.h"
+#include "Input/BorshInputComponent.h"
+#include "AbilitySystem/BorshAbilitySystemComponent.h"
 #include <Interaction/EnemyInterface.h>
 #include <EnhancedInputSubsystems.h>
 
@@ -82,6 +85,33 @@ void ABorshPlayerController::CursorTrace()
 	}
 }
 
+void ABorshPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
+{
+
+}
+
+void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
+{
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagReleased(InputTag);
+}
+
+void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
+{
+	// Now I don't want to have to cast every single time as ability input tag held may be called every frame and that can be expensive.
+	if (GetASC() == nullptr) return;
+	GetASC()->AbilityInputTagHeld(InputTag);
+}
+
+UBorshAbilitySystemComponent* ABorshPlayerController::GetASC()
+{
+	if (BorshAbilitySystemComponent == nullptr)
+	{
+		BorshAbilitySystemComponent = Cast<UBorshAbilitySystemComponent>(UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetPawn<APawn>()));
+	}
+	return BorshAbilitySystemComponent;
+}
+
 void ABorshPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -100,12 +130,16 @@ void ABorshPlayerController::BeginPlay()
 	InputModeData.SetHideCursorDuringCapture(false);
 	SetInputMode(InputModeData);
 }
+
 void ABorshPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
-	UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABorshPlayerController::Move);
+	UBorshInputComponent* BorshInputComponent = CastChecked<UBorshInputComponent>(InputComponent);
+	BorshInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABorshPlayerController::Move);
+	// Now we need to call our function BindAbilityActions
+	BorshInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }
+
 void ABorshPlayerController::Move(const FInputActionValue& InputActionValue)
 {
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();

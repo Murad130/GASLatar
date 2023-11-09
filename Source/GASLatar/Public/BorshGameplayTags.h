@@ -42,7 +42,13 @@ public:
 	FGameplayTag Attributes_Secondary_MaxHealth;
 	FGameplayTag Attributes_Secondary_MaxMana;
 
-protected:
+	FGameplayTag InputTag_LMB;
+	FGameplayTag InputTag_RMB;
+	FGameplayTag InputTag_a;
+	FGameplayTag InputTag_z;
+	FGameplayTag InputTag_e;
+	FGameplayTag InputTag_r;
+
 
 private:
 	// for a static variable like this, we need to go into the CPP file and explicitly declare the type

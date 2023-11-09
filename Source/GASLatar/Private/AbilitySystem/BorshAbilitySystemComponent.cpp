@@ -2,7 +2,9 @@
 
 
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
+
 #include "BorshGameplayTags.h"
+#include "AbilitySystem/Abilities/BorshGameplayAbility.h"
 
 void UBorshAbilitySystemComponent::AbilityActorInfoSet()
 {
@@ -12,6 +14,69 @@ void UBorshAbilitySystemComponent::AbilityActorInfoSet()
 	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
 	// Now we can access the tags
 	// GameplayTags.Attributes_Secondary_Armor.ToString()
+}
+
+void UBorshAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities)
+{
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartupAbilities)
+	{
+		// So how do we grant the abilities ? we need to create an ability spec from each of these classes
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		if (const UBorshGameplayAbility* BorshAbility = Cast<UBorshGameplayAbility>(AbilitySpec.Ability))
+		{
+			// Now we need to give the player possibility to change the Input for Ability
+			AbilitySpec.DynamicAbilityTags.AddTag(BorshAbility->StartupInputTag);
+			// And once we have a spec, we can simply give the ability with a function that exists on the ability
+			GiveAbility(AbilitySpec);
+			// DynamicAbilityTags are designed to be added and removed at runtime so we can change this later is we want to
+		}
+	}
+
+}
+
+void UBorshAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)
+{
+	// Accessing our ability system component and call its ability input tag pressed.
+	// Now we need to check if they're not already active (I don't want to activate them every single frame while we're holding input).
+	// But first we need to make sure the input tag is valid
+	if (!InputTag.IsValid()) return;
+
+	// After that I want to check to see if this ability system component has any activatable abilities with this input tag.
+	// So how do we do that? Well, we have a function that contains all of our activatable abilities.
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  // GetActivatableAbilities returns a array of gameplay ability specs(That can be activated).
+	{
+		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		{
+			// To tell an ability that its input is being pressed.
+			AbilitySpecInputPressed(AbilitySpec); // sets a boolean on the ability spec that is keeping track of whether or not its particular input is pressed.
+
+			// So now we want to activate it if it's not already active. 
+			if (!AbilitySpec.IsActive())
+			{
+				TryActivateAbility(AbilitySpec.Handle);
+
+			}
+		}
+	}
+
+}
+
+void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
+{
+	// We don't want to just end an ability if its input is released. We want the ability to determine that because not all abilities need to be canceled or ended when their ability is no longer pressed. 
+	// We don't want to necessarily end that ability as soon as it's released.
+
+	if (!InputTag.IsValid()) return;
+
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  // GetActivatableAbilities returns a array of gameplay ability specs(That can be activated).
+	{
+		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		{
+			AbilitySpecInputReleased(AbilitySpec); 
+		}
+	}
+
+
 }
 
 void UBorshAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
