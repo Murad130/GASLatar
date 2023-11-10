@@ -25,6 +25,12 @@ void ABorshCharacterBase::BeginPlay()
 
 }
 
+FVector ABorshCharacterBase::GetCombatSocketLocation()
+{
+	check(Weapon);
+	return Weapon->GetSocketLocation(WeaponTipSocketName);
+}
+
 void ABorshCharacterBase::InitAbilityActorInfo()
 {
 

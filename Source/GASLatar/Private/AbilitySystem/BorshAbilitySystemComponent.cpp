@@ -8,7 +8,7 @@
 
 void UBorshAbilitySystemComponent::AbilityActorInfoSet()
 {
-	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UBorshAbilitySystemComponent::EffectApplied);
+	OnGameplayEffectAppliedDelegateToSelf.AddUObject(this, &UBorshAbilitySystemComponent::ClientEffectApplied);
 
 	// Using Gameplay Tags that we created in our singleton class
 	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
@@ -79,7 +79,7 @@ void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& I
 
 }
 
-void UBorshAbilitySystemComponent::EffectApplied(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
+void UBorshAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)
 {
 	// if we want to show something to the screen that's in the view domain, it needs to receive something
 	// from the middleman, the widget controller, which needs to receive something from the ability system component.
