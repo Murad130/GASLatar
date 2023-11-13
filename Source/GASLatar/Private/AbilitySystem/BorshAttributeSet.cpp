@@ -6,7 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
-#include <Net/UnrealNetwork.h>
+#include "Net/UnrealNetwork.h"
 #include "BorshGameplayTags.h"
 
 UBorshAttributeSet::UBorshAttributeSet()
@@ -82,7 +82,6 @@ void UBorshAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute,
 		// but REMEMBER all this does is clamp what's returned from querying the modifier (this is not a legit set of the health attribute)
 		// We need to set in our PostGameplayEffectExecute function.
 		NewValue = FMath::Clamp(NewValue, 0.f, GetMaxHealth());
-
 	}
 	if (Attribute == GetManaAttribute())
 	{
@@ -157,6 +156,7 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	{
 		// Setting the value to a clamped value(value from PreAttributeChange)
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
+		UE_LOG(LogTemp, Warning, TEXT("Changed Health on %s, Health: %f"), *Props.TargetAvatarActor->GetName(), GetHealth());
 	}
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{

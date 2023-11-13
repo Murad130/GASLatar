@@ -112,52 +112,47 @@ void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		}
 		return;
 	}
+	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 	// if this is left mouse button we are concerned about running 
 	// Case 1 : if we are pressing the left mouse button down and we're targeting (we're hovering over an enemy) we are just activating the ability
-	if (bTargeting)
+	if (!bTargeting && !bShiftKeyDown)
 	{
 		if (GetASC())
 		{
-			// Now I don't want to have to cast every single time as ability input tag held may be called every frame and that can be expensive. (Thanks to our GetASC)
-			GetASC()->AbilityInputTagReleased(InputTag);
-		}
-	}
-	// When we release we want to check the follow time so we can know if this was a short press or not
-	else
-	{
-		// We need to get pawn location to pass it to our Navigation library as argument
-		const APawn* ControlledPawn = GetPawn();
-		if (FollowTime <= ShortPressThreshold && ControlledPawn)
-		{
-			// If that's the case, well then we want to do something different. We want to find a path. We want to create a navigation path, a set of points to follow. For this we can use Navigation Library
-			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
+			// We need to get pawn location to pass it to our Navigation library as argument
+			const APawn* ControlledPawn = GetPawn();
+			if (FollowTime <= ShortPressThreshold && ControlledPawn)
 			{
-				// So first we're going to take our spline and each time we set the spline points, we should clear all the points out that were there before.
-				Spline->ClearSplinePoints();
-				// Then we're going to loop through our path.
-				for (const FVector& PointLoc : NavPath->PathPoints)
+				// If that's the case, well then we want to do something different. We want to find a path. We want to create a navigation path, a set of points to follow. For this we can use Navigation Library
+				if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
 				{
-					// So this is the path that we're concerned with and it starts at the controlled pawns location and it ends at the destination. So we have a set of points that we can add to our spline.
-					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
-				}
-				// So in the case where we would run off into the distance 
-				// actually a case where we had no path points in the array.  
-				// just check for that and only start running if we get at least one path 
-				if (NavPath->PathPoints.Num() > 0)
-				{
-					CachedDestination = NavPath->PathPoints.Last();
+					// So first we're going to take our spline and each time we set the spline points, we should clear all the points out that were there before.
+					Spline->ClearSplinePoints();
+					// Then we're going to loop through our path.
+					for (const FVector& PointLoc : NavPath->PathPoints)
+					{
+						// So this is the path that we're concerned with and it starts at the controlled pawns location and it ends at the destination. So we have a set of points that we can add to our spline.
+						Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
+					}
+					// So in the case where we would run off into the distance 
+					// actually a case where we had no path points in the array.  
+					// just check for that and only start running if we get at least one path 
+					if (NavPath->PathPoints.Num() > 0)
+					{
+						CachedDestination = NavPath->PathPoints.Last();
+						bAutoRunning = true;
+					}
+					// Our spline will now have points in our path, which means our be auto running boolean should be set to true.
 					bAutoRunning = true;
 				}
-				// Our spline will now have points in our path, which means our be auto running boolean should be set to true.
-				bAutoRunning = true;
 			}
+			// And we're also no longer holding the mouse button down. That means we should reset our Follow time
+			FollowTime = 0.f;
+			// We should also set our bTargeting Boolean to false.
+			bTargeting = false;
+			// By far all we're doing is adding points to our spine (We are not going to be moving)
+			// We need to set that in Tick Event
 		}
-		// And we're also no longer holding the mouse button down. That means we should reset our Follow time
-		FollowTime = 0.f;
-		// We should also set our bTargeting Boolean to false.
-		bTargeting = false;
-		// By far all we're doing is adding points to our spine (We are not going to be moving)
-		// We need to set that in Tick Event
 	}
 }
 
@@ -176,7 +171,7 @@ void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	}
 	// if this is left mouse button we are concerned about running 
 	// Case 1 : if we are pressing the left mouse button down and we're targeting (we're hovering over an enemy) we are just activating the ability
-	if (bTargeting)
+	if (bTargeting || bShiftKeyDown)
 	{
 		if (GetASC())
 		{
@@ -239,6 +234,8 @@ void ABorshPlayerController::SetupInputComponent()
 	Super::SetupInputComponent();
 	UBorshInputComponent* BorshInputComponent = CastChecked<UBorshInputComponent>(InputComponent);
 	BorshInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABorshPlayerController::Move);
+	BorshInputComponent->BindAction(ShiftAction, ETriggerEvent::Started, this, &ABorshPlayerController::ShiftPressed);
+	BorshInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &ABorshPlayerController::ShiftReleased);
 	// Now we need to call our function BindAbilityActions
 	BorshInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }

@@ -1,6 +1,7 @@
 // Copyright Latar
 
-
+#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/BorshProjectileSpell.h"
 #include "Actor/BorshProjectile.h"
 #include "Interaction/CombatInterface.h"
@@ -9,9 +10,14 @@ void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Han
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
+}
+
+void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+{
+	
 	// We're going to spawn a projectile, but only if we're on the server.
 
-	const bool bIsServer = HasAuthority(&ActivationInfo);
+	const bool bIsServer = GetAvatarActorFromActorInfo()->HasAuthority();
 	if (!bIsServer) return;
 
 	// Accessing CombatInterface
@@ -25,12 +31,16 @@ void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 		// Getting Socket Location
 		const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
+		// Projectile Rotation
+		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+		// We want our projectiles to fly parallel to the ground
+		Rotation.Pitch = 0.f;
 
 		// Now we want to spawn a projectile. But I'm interested in spawning an actor that's going to fly through the air and hit something and apply a gameplay effect. 
 		FTransform SpawnTransform;
 		// Setting SpawnTransform Location
 		SpawnTransform.SetLocation(SocketLocation);
-		// TODO: Set the projectile Rotation
+		SpawnTransform.SetRotation(Rotation.Quaternion());
 
 		ABorshProjectile* Projectile = GetWorld()->SpawnActorDeferred<ABorshProjectile>(
 			ProjectileClass,
@@ -40,8 +50,13 @@ void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Han
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);  // So now this is going to spawn an actor at this transform.
 
 		// TODO: Give the Projectile a Gameplay Effect Spec for causing damage
+		// We're going to first of all make an effect spec handle and that means we need the ability system component
+		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
+		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
+		Projectile->DamageEffectSpecHandle = SpecHandle;
 
 		// And to finish spawning the projectile
 		Projectile->FinishSpawning(SpawnTransform);
 	}
+
 }
