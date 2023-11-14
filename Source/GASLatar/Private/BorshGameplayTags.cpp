@@ -119,4 +119,9 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 		FString("Input Tag for r key")
 	);
 
+	GameplayTags.Damage = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Damage"),
+		FString("Damage")
+	);
+
 }

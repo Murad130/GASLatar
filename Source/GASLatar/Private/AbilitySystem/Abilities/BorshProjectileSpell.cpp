@@ -5,6 +5,7 @@
 #include "AbilitySystem/Abilities/BorshProjectileSpell.h"
 #include "Actor/BorshProjectile.h"
 #include "Interaction/CombatInterface.h"
+#include "GASLatar/Public/BorshGameplayTags.h"
 
 void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {
@@ -53,6 +54,9 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 		// We're going to first of all make an effect spec handle and that means we need the ability system component
 		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
 		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
+
+		FBorshGameplayTags GameplayTags = FBorshGameplayTags::Get();
+		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, 50.f);
 		Projectile->DamageEffectSpecHandle = SpecHandle;
 
 		// And to finish spawning the projectile

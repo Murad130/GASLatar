@@ -49,6 +49,8 @@ public:
 	FGameplayTag InputTag_e;
 	FGameplayTag InputTag_r;
 
+	FGameplayTag Damage;
+
 
 private:
 	// for a static variable like this, we need to go into the CPP file and explicitly declare the type
