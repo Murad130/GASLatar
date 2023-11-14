@@ -50,6 +50,8 @@ public:
 	FGameplayTag InputTag_r;
 
 	FGameplayTag Damage;
+	
+	FGameplayTag Effects_HitReact;
 
 
 private:

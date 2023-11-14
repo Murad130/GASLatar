@@ -124,4 +124,9 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 		FString("Damage")
 	);
 
+	GameplayTags.Effects_HitReact = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Effects.HitReact"),
+		FString("Tag granted when Hit Reacting")
+	);
+
 }

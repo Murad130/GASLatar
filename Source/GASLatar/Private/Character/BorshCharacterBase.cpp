@@ -28,6 +28,11 @@ UAbilitySystemComponent* ABorshCharacterBase::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+UAnimMontage* ABorshCharacterBase::GetHitReactMontage_Implementation()
+{
+	return HitReactMontage;
+}
+
 void ABorshCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
