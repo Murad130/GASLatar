@@ -6,6 +6,7 @@
 #include "Character/BorshCharacterBase.h"
 #include "Interaction/EnemyInterface.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
+#include "AbilitySystem/Data/CharacterClassInfo.h"
 #include "EnemyCharacter.generated.h"
 
 class UWidgetComponent;
@@ -19,7 +20,6 @@ class GASLATAR_API AEnemyCharacter : public ABorshCharacterBase, public IEnemyIn
 	GENERATED_BODY()
 		
 public:
-
 	AEnemyCharacter();
 
 	/** Enemy Interface */
@@ -38,12 +38,15 @@ public:
 	FOnAttributeChangedSignature OnMaxHealthChanged;
 
 protected:
-
 	virtual void BeginPlay() override;
 	virtual void InitAbilityActorInfo() override;
+	virtual void InitializeDefaultAttributes() const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
 	int32 Level = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Class Defaults")
+	ECharacterClass CharacterClass = ECharacterClass::Warrior;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> HealthBar;

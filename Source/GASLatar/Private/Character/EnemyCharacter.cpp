@@ -2,6 +2,7 @@
 
 
 #include "Character/EnemyCharacter.h"
+#include "AbilitySystem/BorshAbilitySystemLibrary.h"
 #include "GASLatar/GASLatar.h"
 #include "Components/WidgetComponent.h"
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
@@ -42,6 +43,8 @@ int32 AEnemyCharacter::GetPlayerLevel()
 
 void AEnemyCharacter::BeginPlay()
 {
+	Super::BeginPlay();
+	InitAbilityActorInfo();
 
 
 	if (UBorshUserWidget* BorshUserWidget = Cast<UBorshUserWidget>(HealthBar->GetUserWidgetObject()))
@@ -77,4 +80,9 @@ void AEnemyCharacter::InitAbilityActorInfo()
 	Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 
 	InitializeDefaultAttributes();
+}
+
+void AEnemyCharacter::InitializeDefaultAttributes() const
+{
+	UBorshAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }

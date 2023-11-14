@@ -4,10 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Data/CharacterClassInfo.h"
 #include "BorshAbilitySystemLibrary.generated.h"
 
 class UOverlayWidgetController;
 class UAttributeMenuWidgetController;
+class UAbilitySystemComponent;
 
 /**
  * 
@@ -28,4 +30,7 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController")
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "BorshAbilitySystemLibrary|CharacterClassDefaults")
+	static void InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC);
 };
