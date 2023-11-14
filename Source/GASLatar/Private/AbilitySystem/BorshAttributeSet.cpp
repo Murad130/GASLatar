@@ -163,6 +163,23 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 		// Setting the value to a clamped value(value from PreAttributeChange)
 		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
 	}
+	// Checking to see if the evaluated data has the attribute incoming damage and then we can respond accordingly.
+	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
+	{
+		// Now incoming damage being a meta attribute should be used for its value and then reset or zeroed out.
+		const float LocalIncomingDamage = GetIncomingDamage();
+		// So we're caching that value locally and then we can set that meta attribute to zero
+		SetIncomingDamage(0.f);
+		// So now that we have local incoming damage, we can decide what to do with it and we should only really do anything if its value isn't zero.
+		if (LocalIncomingDamage > 0.f)
+		{
+			const float NewHealth = GetHealth() - LocalIncomingDamage;
+			// And we can make sure that that is not going to be a negative value.
+			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+			// At this point, we can tell certain things about the damage that has been done. For example, if new health is now zero, then we know that this damage caused was fatal.
+			const bool bFatal = NewHealth <= 0.f;
+		}
+	}
 }
 
 /*********************************************Vital*********************************************************/

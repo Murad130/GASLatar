@@ -75,7 +75,7 @@ public:
 	TMap<FGameplayTag, TStaticFuncPtr<FGameplayAttribute()>> TagsToAttributes;
 	// So now that we have this function pointer, we have the ability to bind a function to it that returns an gameplay attribute and takes zero inputs.
 
-	/***********************************************************Primary**************************************************************************/
+	/***********************************************************Primary***********************************************************************************/
 
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Strength, Category = "Primary Attributes")
 	FGameplayAttributeData Strength;
@@ -93,7 +93,7 @@ public:
 	FGameplayAttributeData Vigor;
 	ATTRIBUTE_ACCESSORS(UBorshAttributeSet, Vigor);
 
-	/***********************************************************Secondary**************************************************************************/
+	/***********************************************************Secondary***********************************************************************************/
 
 	// Now we set un Secondary Attributes and we need a way for them to be derived from other attributes (Ex: armor is dependent on resilience, then every time resilience changes 
 	// We need to change armor accordingly. We can do this by applying an Infinite Gameplay Effect. We need to add this to our Character Class
@@ -138,7 +138,7 @@ public:
 	FGameplayAttributeData MaxMana;
 	ATTRIBUTE_ACCESSORS(UBorshAttributeSet, MaxMana);
 
-	/***********************************************************Vital******************************************************************************/
+	/***********************************************************Vital***************************************************************************************/
 
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Vital Attributes")
 	FGameplayAttributeData Health;
@@ -147,6 +147,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mana, Category = "Vital Attributes")
 	FGameplayAttributeData Mana;
 	ATTRIBUTE_ACCESSORS(UBorshAttributeSet, Mana);
+
+	/***********************************************************META ATTRIBUTES******************************************************************************/
+	UPROPERTY(BlueprintReadOnly, Category = "Meta Attributes")
+	FGameplayAttributeData IncomingDamage;
+	ATTRIBUTE_ACCESSORS(UBorshAttributeSet, IncomingDamage);
 
 	/**********************************Vital***************************************/
 
