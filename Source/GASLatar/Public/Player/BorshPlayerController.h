@@ -14,6 +14,7 @@ class IEnemyInterface;
 class UBorshInputConfig;
 class UBorshAbilitySystemComponent;
 class USplineComponent;
+class UDamageTextComponent;
 
 /**
  * 
@@ -27,6 +28,8 @@ public:
 	ABorshPlayerController();
 	virtual void PlayerTick(float DeltaTime) override;
 
+	UFUNCTION(Client, Reliable)
+	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter);
 
 protected:
 	virtual void BeginPlay() override;
@@ -86,5 +89,8 @@ private:
 	TObjectPtr<USplineComponent> Spline; // And if we have a spline component variable, we need to construct that. We do that in the constructor.
 
 	void AutoRun();
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UDamageTextComponent> DamageTextComponentClass;
 
 };

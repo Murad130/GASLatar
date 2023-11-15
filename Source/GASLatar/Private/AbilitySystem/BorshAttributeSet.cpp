@@ -9,6 +9,8 @@
 #include "Net/UnrealNetwork.h"
 #include "BorshGameplayTags.h"
 #include "Interaction/CombatInterface.h"
+#include "Kismet/GameplayStatics.h"
+#include "Player/BorshPlayerController.h"
 
 UBorshAttributeSet::UBorshAttributeSet()
 {
@@ -145,6 +147,7 @@ void UBorshAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackDat
 
 }
 
+
 //Executed after a Gameplay Effect changes an Attribute
 void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
@@ -186,7 +189,6 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 				{
 					CombatInterface->Die();
 				}
-			
 			}
 			else
 			{
@@ -196,6 +198,21 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 				TagConatiner.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
 				Props.TargetASC->TryActivateAbilitiesByTag(TagConatiner);
 			}
+			ShowFloatingText(Props, LocalIncomingDamage);
+
+		}
+	}
+}
+
+void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage) const
+{
+	// So from the attribute set, we're going to get the local player controller that actually has a human player and call this function on it so we can see that damage number.
+		// But we're going to call this function passing in the target character or actor that we want to attach or show this number above.
+	if (Props.SourceCharacter != Props.TargetCharacter)
+	{
+		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0)))
+		{
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
 		}
 	}
 }
