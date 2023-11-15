@@ -8,6 +8,7 @@
 #include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
 #include "BorshGameplayTags.h"
+#include "Interaction/CombatInterface.h"
 
 UBorshAttributeSet::UBorshAttributeSet()
 {
@@ -178,7 +179,16 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
 			// At this point, we can tell certain things about the damage that has been done. For example, if new health is now zero, then we know that this damage caused was fatal.
 			const bool bFatal = NewHealth <= 0.f;
-			if (!bFatal)
+			if (bFatal)
+			{
+				ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
+				if (CombatInterface)
+				{
+					CombatInterface->Die();
+				}
+			
+			}
+			else
 			{
 				// We can activate the ability. but I'd like this aura attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
 				// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.

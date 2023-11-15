@@ -56,7 +56,7 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
 
 		const FBorshGameplayTags GameplayTags = FBorshGameplayTags::Get();
-		const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel());
+		const float ScaledDamage = Damage.GetValueAtLevel(20);
 
 		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, ScaledDamage);
 		Projectile->DamageEffectSpecHandle = SpecHandle;

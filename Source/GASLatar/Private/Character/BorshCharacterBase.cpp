@@ -33,6 +33,31 @@ UAnimMontage* ABorshCharacterBase::GetHitReactMontage_Implementation()
 	return HitReactMontage;
 }
 
+void ABorshCharacterBase::Die()
+{
+	// Drop the weapon (Detachment automatically replicated)
+	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
+	MulticastHandleDeath();
+}
+
+void ABorshCharacterBase::MulticastHandleDeath_Implementation()
+{
+	// Ragdoll Weapon
+	Weapon->SetSimulatePhysics(true);
+	Weapon->SetEnableGravity(true);
+	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+
+	// Ragdoll Mesh
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetEnableGravity(true);
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+
+
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Dissolve();
+}
+
 void ABorshCharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
@@ -92,5 +117,23 @@ void ABorshCharacterBase::AddCharacterAbilities()
 	BorshASC->AddCharacterAbilities(StartupAbilities);
 
 	// So the question now is when do we call add character abilities (This function)? Well, a good place to call it is in possessed by.
+}
+
+void ABorshCharacterBase::Dissolve()
+{
+	if (IsValid(DissolveMaterialInstance))
+	{
+		UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(DissolveMaterialInstance, this);
+		GetMesh()->SetMaterial(0, DynamicMatInst);
+
+		StartDissolveTimeLine(DynamicMatInst);
+	}
+	if (IsValid(WeaponDissolveMaterialInstance))
+	{
+		UMaterialInstanceDynamic* DynamicMatInst = UMaterialInstanceDynamic::Create(WeaponDissolveMaterialInstance, this);
+		Weapon->SetMaterial(0, DynamicMatInst);
+
+		StartWeaponDissolveTimeLine(DynamicMatInst);
+	}
 }
 
