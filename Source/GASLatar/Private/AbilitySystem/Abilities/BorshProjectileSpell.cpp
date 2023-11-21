@@ -1,8 +1,9 @@
 // Copyright Latar
 
+#include "AbilitySystem/Abilities/BorshProjectileSpell.h"
+
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
-#include "AbilitySystem/Abilities/BorshProjectileSpell.h"
 #include "Actor/BorshProjectile.h"
 #include "Interaction/CombatInterface.h"
 #include "GASLatar/Public/BorshGameplayTags.h"
@@ -50,10 +51,18 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 			Cast<APawn>(GetOwningActorFromActorInfo()),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn);  // So now this is going to spawn an actor at this transform.
 
-		// TODO: Give the Projectile a Gameplay Effect Spec for causing damage
-		// We're going to first of all make an effect spec handle and that means we need the ability system component
 		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetAvatarActorFromActorInfo());
-		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
+		FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+		EffectContextHandle.SetAbility(this);
+		EffectContextHandle.AddSourceObject(Projectile);
+		TArray<TWeakObjectPtr<AActor>> Actors;
+		Actors.Add(Projectile);
+		EffectContextHandle.AddActors(Actors);
+		FHitResult HitResult;
+		HitResult.Location = ProjectileTargetLocation;
+		EffectContextHandle.AddHitResult(HitResult);
+
+		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
 
 		const FBorshGameplayTags GameplayTags = FBorshGameplayTags::Get();
 		const float ScaledDamage = Damage.GetValueAtLevel(10);

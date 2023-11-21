@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/BorshAbilitySystemLibrary.h"
 
+#include "BorshAbilityTypes.h"
 #include "Game/BorshGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/WidgetController/BorshWidgetController.h"
@@ -57,12 +58,9 @@ UAttributeMenuWidgetController* UBorshAbilitySystemLibrary::GetAttributeMenuWidg
 
 void UBorshAbilitySystemLibrary::InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC)
 {
-	ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
-	if (BorshGameMode == nullptr) return;
-
 	AActor* AvatarActor = ASC->GetAvatarActor();
 
-	UCharacterClassInfo* CharacterClassInfo = BorshGameMode->CharacterClassInfo;
+	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
 	FCharacterClassDefaultInfo ClassDefaultInfo = CharacterClassInfo->GetClassDefaultInfo(CharacterClass);
 
 	FGameplayEffectContextHandle PrimaryAttributesContextHandle = ASC->MakeEffectContext();
@@ -83,13 +81,51 @@ void UBorshAbilitySystemLibrary::InitializeDefaultAttributes(const UObject* Worl
 
 void UBorshAbilitySystemLibrary::GiveStartupAbilities(const UObject* WorldContextObject, UAbilitySystemComponent* ASC)
 {
-	ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
-	if (BorshGameMode == nullptr) return;
-
-	UCharacterClassInfo* CharacterClassInfo = BorshGameMode->CharacterClassInfo;
+	UCharacterClassInfo* CharacterClassInfo = GetCharacterClassInfo(WorldContextObject);
 	for (TSubclassOf<UGameplayAbility> AbilityClass : CharacterClassInfo->CommonAbilities)
 	{
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
 		ASC->GiveAbility(AbilitySpec);
+	}
+}
+
+UCharacterClassInfo* UBorshAbilitySystemLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
+{
+	ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (BorshGameMode == nullptr) return nullptr;
+	return BorshGameMode->CharacterClassInfo;
+}
+
+bool UBorshAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->IsBlockedHit();
+	}
+	return false;
+}
+
+bool UBorshAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->IsCriticalHit();
+	}
+	return false;
+}
+
+void UBorshAbilitySystemLibrary::SetIsBlockedHit(FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetIsBlockedHit(bInIsBlockedHit);
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetIsCriticalHit(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetIsCriticalHit(bInIsCriticalHit);
 	}
 }

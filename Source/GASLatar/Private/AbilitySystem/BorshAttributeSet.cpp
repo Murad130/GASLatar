@@ -11,6 +11,7 @@
 #include "Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/BorshPlayerController.h"
+#include <AbilitySystem/BorshAbilitySystemLibrary.h>
 
 UBorshAttributeSet::UBorshAttributeSet()
 {
@@ -192,19 +193,22 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 			}
 			else
 			{
-				// We can activate the ability. but I'd like this aura attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
+				// We can activate the ability. but I'd like this Borsh attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
 				// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.
 				FGameplayTagContainer TagConatiner;
 				TagConatiner.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
 				Props.TargetASC->TryActivateAbilitiesByTag(TagConatiner);
 			}
-			ShowFloatingText(Props, LocalIncomingDamage);
 
+		
+			const bool bBlock = UBorshAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+			const bool bCriticalHit = UBorshAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+			ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCriticalHit);
 		}
 	}
 }
 
-void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage) const
+void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	// So from the attribute set, we're going to get the local player controller that actually has a human player and call this function on it so we can see that damage number.
 		// But we're going to call this function passing in the target character or actor that we want to attach or show this number above.
