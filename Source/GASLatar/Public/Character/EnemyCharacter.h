@@ -10,6 +10,8 @@
 #include "EnemyCharacter.generated.h"
 
 class UWidgetComponent;
+class UBehaviorTree;
+class ABorshAIController;
 
 /**
  * 
@@ -21,6 +23,7 @@ class GASLATAR_API AEnemyCharacter : public ABorshCharacterBase, public IEnemyIn
 		
 public:
 	AEnemyCharacter();
+	virtual void PossessedBy(AController* NewController) override;
 
 	/** Enemy Interface */
 	virtual void HighlightActor() override;
@@ -64,5 +67,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UWidgetComponent> HealthBar;
 
+	UPROPERTY(EditAnywhere, Category = "AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
 
+	UPROPERTY()
+	TObjectPtr<ABorshAIController> BorshAIController;
 };

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AbilitySystem/Abilities/BorshGameplayAbility.h"
+#include "AbilitySystem/Abilities/BorshDamageGameplayAbility.h"
 #include "BorshProjectileSpell.generated.h"
 
 class ABorshProjectile;
@@ -13,7 +13,7 @@ class UGameplayEffect;
  * 
  */
 UCLASS()
-class GASLATAR_API UBorshProjectileSpell : public UBorshGameplayAbility
+class GASLATAR_API UBorshProjectileSpell : public UBorshDamageGameplayAbility
 {
 	GENERATED_BODY()
 	
@@ -27,7 +27,4 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSubclassOf<ABorshProjectile> ProjectileClass;
 
-	// For Damage Effect
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };

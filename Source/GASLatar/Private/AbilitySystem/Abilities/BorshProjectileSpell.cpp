@@ -35,8 +35,6 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 		const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
 		// Projectile Rotation
 		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-		// We want our projectiles to fly parallel to the ground
-		Rotation.Pitch = 0.f;
 
 		// Now we want to spawn a projectile. But I'm interested in spawning an actor that's going to fly through the air and hit something and apply a gameplay effect. 
 		FTransform SpawnTransform;
@@ -65,9 +63,13 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
 
 		const FBorshGameplayTags GameplayTags = FBorshGameplayTags::Get();
-		const float ScaledDamage = Damage.GetValueAtLevel(10);
 
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Damage, ScaledDamage);
+		for (auto& Pair : DamageTypes)
+		{
+			const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel());
+			UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+		}
+
 		Projectile->DamageEffectSpecHandle = SpecHandle;
 
 		// And to finish spawning the projectile

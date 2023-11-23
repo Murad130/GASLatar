@@ -38,8 +38,12 @@ UBorshAttributeSet::UBorshAttributeSet()
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
 	TagsToAttributes.Add(GameplayTags.Attributes_Secondary_MaxMana, GetMaxManaAttribute);
 
+	/***********************************************************RESISTANCES********************************************************************/
 
-
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Arcane, GetArcaneResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Fire, GetFireResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Lightning, GetLightningResistanceAttribute);
+	TagsToAttributes.Add(GameplayTags.Attributes_Resistance_Physical, GetPhysicalResistanceAttribute);
 }
 
 void UBorshAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -65,6 +69,14 @@ void UBorshAttributeSet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, ManaRegeneration, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always);
 	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, MaxMana, COND_None, REPNOTIFY_Always);
+
+	/***********************************************************RESISTANCES********************************************************************/
+
+
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, FireResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, LightningResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, ArcaneResistance, COND_None, REPNOTIFY_Always);
+	DOREPLIFETIME_CONDITION_NOTIFY(UBorshAttributeSet, PhysicalResistance, COND_None, REPNOTIFY_Always);
 
 	/*********************************************Vital*********************************************************/
 
@@ -141,10 +153,8 @@ void UBorshAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackDat
 			Props.TargetController = Data.Target.AbilityActorInfo->PlayerController.Get();
 			Props.TargetCharacter = Cast<ACharacter>(Props.TargetAvatarActor);
 			Props.TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Props.TargetAvatarActor);
-
 		}
 	}
-
 
 }
 
@@ -195,9 +205,9 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 			{
 				// We can activate the ability. but I'd like this Borsh attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
 				// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.
-				FGameplayTagContainer TagConatiner;
-				TagConatiner.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
-				Props.TargetASC->TryActivateAbilitiesByTag(TagConatiner);
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 			}
 
 		
@@ -214,9 +224,9 @@ void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float 
 		// But we're going to call this function passing in the target character or actor that we want to attach or show this number above.
 	if (Props.SourceCharacter != Props.TargetCharacter)
 	{
-		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0)))
+		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(Props.SourceCharacter->Controller))
 		{
-			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }
@@ -305,6 +315,28 @@ void UBorshAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldMaxHea
 void UBorshAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldMaxMana) const
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, MaxMana, OldMaxMana);
+}
+
+/***********************************************************RESISTANCES********************************************************************/
+
+void UBorshAttributeSet::OnRep_FireResistance(const FGameplayAttributeData& OldFireResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, FireResistance, OldFireResistance);
+}
+
+void UBorshAttributeSet::OnRep_LightningResistance(const FGameplayAttributeData& OldLightningResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, LightningResistance, OldLightningResistance);
+}
+
+void UBorshAttributeSet::OnRep_ArcaneResistance(const FGameplayAttributeData& OldArcaneResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, ArcaneResistance, OldArcaneResistance);
+}
+
+void UBorshAttributeSet::OnRep_PhysicalResistance(const FGameplayAttributeData& OldPhysicalResistance) const
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, PhysicalResistance, OldPhysicalResistance);
 }
 
 

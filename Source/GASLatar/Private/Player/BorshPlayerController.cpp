@@ -33,15 +33,15 @@ void ABorshPlayerController::PlayerTick(float DeltaTime)
 
 }
 
-void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter)
+void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
 {
-	if (IsValid(TargetCharacter) && DamageTextComponentClass)
+	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
 	{
 		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
 		DamageText->RegisterComponent();
 		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(DamageAmount);
+		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
 	}
 }
 
@@ -131,8 +131,6 @@ void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 	// Case 1 : if we are pressing the left mouse button down and we're targeting (we're hovering over an enemy) we are just activating the ability
 	if (!bTargeting && !bShiftKeyDown)
 	{
-		if (GetASC())
-		{
 			// We need to get pawn location to pass it to our Navigation library as argument
 			const APawn* ControlledPawn = GetPawn();
 			if (FollowTime <= ShortPressThreshold && ControlledPawn)
@@ -166,7 +164,6 @@ void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 			bTargeting = false;
 			// By far all we're doing is adding points to our spine (We are not going to be moving)
 			// We need to set that in Tick Event
-		}
 	}
 }
 

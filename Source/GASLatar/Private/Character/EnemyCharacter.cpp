@@ -9,6 +9,9 @@
 #include <AbilitySystem/BorshAttributeSet.h>
 #include "UI/Widget/BorshUserWidget.h"
 #include "BorshGameplayTags.h"
+#include "AI/BorshAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
 AEnemyCharacter::AEnemyCharacter()
@@ -25,6 +28,17 @@ AEnemyCharacter::AEnemyCharacter()
 	HealthBar->SetupAttachment(GetRootComponent());
 
 }
+
+void AEnemyCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (!HasAuthority()) return;
+	BorshAIController = Cast<ABorshAIController>(NewController);
+	BorshAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+	BorshAIController->RunBehaviorTree(BehaviorTree);
+}
+
 void AEnemyCharacter::HighlightActor()
 {
 	GetMesh()->SetRenderCustomDepth(true);
@@ -54,7 +68,10 @@ void AEnemyCharacter::BeginPlay()
 	Super::BeginPlay();
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 	InitAbilityActorInfo();
-	UBorshAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+	if (HasAuthority())
+	{
+		UBorshAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+	}
 
 	if (UBorshUserWidget* BorshUserWidget = Cast<UBorshUserWidget>(HealthBar->GetUserWidgetObject()))
 	{
@@ -102,7 +119,10 @@ void AEnemyCharacter::InitAbilityActorInfo()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
 
-	InitializeDefaultAttributes();
+	if (HasAuthority())
+	{
+		InitializeDefaultAttributes();
+	}
 }
 
 void AEnemyCharacter::InitializeDefaultAttributes() const
