@@ -27,8 +27,6 @@ void UBTService_FindNearestPlayer::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	// Now what do we do once we have all the actors with the player tag, we want to find the closest one.
 	for (AActor* Actor : ActorsWithTag)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, .5f, FColor::Orange, *Actor->GetName());
-
 		if (IsValid(Actor) && IsValid(OwningPawn))
 		{
 			const float Distance = OwningPawn->GetDistanceTo(Actor);

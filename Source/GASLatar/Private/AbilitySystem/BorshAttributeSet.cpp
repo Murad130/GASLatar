@@ -227,6 +227,12 @@ void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float 
 		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(Props.SourceCharacter->Controller))
 		{
 			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
+			return;
+		}
+		// Showing floating text of damage when enemy hits our character
+		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(Props.TargetCharacter->Controller))
+		{
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }

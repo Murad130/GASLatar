@@ -5,6 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
 #include "GASLatar/GASLatar.h"
+#include "BorshGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 
 
@@ -56,6 +57,7 @@ void ABorshCharacterBase::MulticastHandleDeath_Implementation()
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Dissolve();
+	bDead = true;
 }
 
 void ABorshCharacterBase::BeginPlay()
@@ -64,10 +66,39 @@ void ABorshCharacterBase::BeginPlay()
 
 }
 
-FVector ABorshCharacterBase::GetCombatSocketLocation()
+FVector ABorshCharacterBase::GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag)
 {
-	check(Weapon);
-	return Weapon->GetSocketLocation(WeaponTipSocketName);
+	// Return correct socket based on MontageTag
+	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
+	{
+		return Weapon->GetSocketLocation(WeaponTipSocketName);
+	}
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+	{
+		return GetMesh()->GetSocketLocation(LeftHandSocketName);
+	}
+	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+	{
+		return GetMesh()->GetSocketLocation(RightHandSocketName);
+	}
+	return FVector();
+	
+}
+
+bool ABorshCharacterBase::IsDead_Implementation() const
+{
+	return bDead;
+}
+
+AActor* ABorshCharacterBase::GetAvatar_Implementation()
+{
+	return this;
+}
+
+TArray<FTaggedMontage> ABorshCharacterBase::GetAttackMontages_Implementation()
+{
+	return AttackMontages;
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()

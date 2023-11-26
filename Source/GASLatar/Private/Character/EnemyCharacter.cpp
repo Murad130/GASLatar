@@ -70,6 +70,16 @@ void AEnemyCharacter::Die()
 	Super::Die();
 }
 
+void AEnemyCharacter::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+	CombatTarget = InCombatTarget;
+}
+
+AActor* AEnemyCharacter::GetCombatTarget_Implementation() const
+{
+	return CombatTarget;
+}
+
 void AEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -77,7 +87,7 @@ void AEnemyCharacter::BeginPlay()
 	InitAbilityActorInfo();
 	if (HasAuthority())
 	{
-		UBorshAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent);
+		UBorshAbilitySystemLibrary::GiveStartupAbilities(this, AbilitySystemComponent, CharacterClass);
 	}
 
 	if (UBorshUserWidget* BorshUserWidget = Cast<UBorshUserWidget>(HealthBar->GetUserWidgetObject()))
@@ -118,7 +128,10 @@ void AEnemyCharacter::HitReactTagChanged(const FGameplayTag CallbackTag, int32 N
 {
 	 bHitReacting = NewCount > 0;
 	 GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
-	 BorshAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), bHitReacting);
+	 if (BorshAIController && BorshAIController->GetBlackboardComponent())
+	 {
+		 BorshAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), bHitReacting);
+	 }	 
 }
 
 

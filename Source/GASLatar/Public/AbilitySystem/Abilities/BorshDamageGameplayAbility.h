@@ -14,8 +14,11 @@ class GASLATAR_API UBorshDamageGameplayAbility : public UBorshGameplayAbility
 {
 	GENERATED_BODY()
 
-protected:
+public:
+	UFUNCTION(BlueprintCallable)
+	void CauseDamage(AActor* TargetActor);
 
+protected:
 	// For Damage Effect
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
