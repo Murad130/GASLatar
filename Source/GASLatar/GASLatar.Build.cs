@@ -14,6 +14,9 @@ public class GASLatar : ModuleRules
 
         OptimizeCode = CodeOptimization.Never;
 
+        PublicDefinitions.Add("WINDOWS_IGNORE_PACKING_MISMATCH");
+        PublicIncludePaths.AddRange(new string[] { "/Unreal Projects/GASLatar/" });
+
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

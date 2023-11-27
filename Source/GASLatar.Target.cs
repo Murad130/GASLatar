@@ -11,5 +11,7 @@ public class GASLatarTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V4;
 
 		ExtraModuleNames.AddRange( new string[] { "GASLatar" } );
-	}
+
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+    }
 }
