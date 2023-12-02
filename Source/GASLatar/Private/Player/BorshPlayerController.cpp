@@ -1,5 +1,7 @@
+// Copyright Latar
 
 #include "Player/BorshPlayerController.h"
+
 #include "AbilitySystemBlueprintLibrary.h"
 #include "BorshGameplayTags.h"
 #include "EnhancedInputSubsystems.h"
@@ -26,14 +28,14 @@ void ABorshPlayerController::PlayerTick(float DeltaTime)
 
 void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
 {
-	if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
-	{
-		UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
-		DamageText->RegisterComponent();
-		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
-		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
-	}
+		if (IsValid(TargetCharacter) && DamageTextComponentClass && IsLocalController())
+		{
+			UDamageTextComponent* DamageText = NewObject<UDamageTextComponent>(TargetCharacter, DamageTextComponentClass);
+			DamageText->RegisterComponent();
+			DamageText->AttachToComponent(TargetCharacter->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+			DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
+			DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
+		}
 }
 void ABorshPlayerController::AutoRun()
 {
