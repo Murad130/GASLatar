@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/BorshGameplayAbility.h"
+#include "Interaction/CombatInterface.h"
 #include "BorshDamageGameplayAbility.generated.h"
 
 /**
@@ -26,5 +27,9 @@ protected:
 	// Map for damage types
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Damage")
 	TMap<FGameplayTag, FScalableFloat> DamageTypes;
+
+
+	UFUNCTION(BlueprintPure)
+	FTaggedMontage GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages) const;
 	
 };

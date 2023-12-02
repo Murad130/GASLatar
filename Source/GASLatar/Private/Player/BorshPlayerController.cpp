@@ -1,3 +1,4 @@
+
 #include "Player/BorshPlayerController.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "BorshGameplayTags.h"
@@ -14,10 +15,8 @@
 ABorshPlayerController::ABorshPlayerController()
 {
 	bReplicates = true;
-	// Constructing spline component
 	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
-
 void ABorshPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
@@ -39,27 +38,18 @@ void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount,
 void ABorshPlayerController::AutoRun()
 {
 	if (!bAutoRunning) return;
-	// Get our Controlled Pawn
 	if (APawn* ControlledPawn = GetPawn())
 	{
-		// if we have a valid pawn, I would like the location on the spline that is closest to the pawn because our pawn may not always be exactly on the spline.
-		// Our character will be slightly off from the spline.
 		const FVector LocationOnSpline = Spline->FindLocationClosestToWorldLocation(ControlledPawn->GetActorLocation(), ESplineCoordinateSpace::World);
-		// So now that we have that location, we can find the direction on the spline that corresponds to this location.
 		const FVector Direction = Spline->FindDirectionClosestToWorldLocation(LocationOnSpline, ESplineCoordinateSpace::World);
-		// And as soon as we have that direction, we now know which direction to move the controlled pawn. So we're going to take ou
 		ControlledPawn->AddMovementInput(Direction);
-		// We want to check our distance to the destination. We want to see if it's within auto run acceptance radius.
 		const float DistanceToDestination = (LocationOnSpline - CachedDestination).Length();
-		// And then we can check this distance.
 		if (DistanceToDestination <= AutoRunAcceptanceRadius)
 		{
-			// if distance is less than or equal to our auto run acceptance we should no longer be auto running
 			bAutoRunning = false;
 		}
 	}
 }
-
 void ABorshPlayerController::CursorTrace()
 {
 	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
@@ -72,68 +62,41 @@ void ABorshPlayerController::CursorTrace()
 		if (ThisActor) ThisActor->HighlightActor();
 	}
 }
-
 void ABorshPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
-	// First We need to check if we are pressing the left mouse button
 	if (InputTag.MatchesTagExact(FBorshGameplayTags::Get().InputTag_LMB))
 	{
 		bTargeting = ThisActor ? true : false;
-		// When we pressed left mouse button and if it's not an enemy we need to call bAutoRunning variable so our character moves to this location but we don't know if it's a short press or not yet
-		// so we give to it false
 		bAutoRunning = false;
 	}
 }
-
 void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
-	// First We need to check if we are pressing the left mouse button
 	if (!InputTag.MatchesTagExact(FBorshGameplayTags::Get().InputTag_LMB))
 	{
-		// if it's not left mouse button do this
-		// Now I don't want to have to cast every single time as ability input tag held may be called every frame and that can be expensive. (Thanks to our GetASC)
 		if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 		return;
 	}
 	if (GetASC()) GetASC()->AbilityInputTagReleased(InputTag);
 
-	// if this is left mouse button we are concerned about running 
-	// Case 1 : if we are pressing the left mouse button down and we're targeting (we're hovering over an enemy) we are just activating the ability
 	if (!bTargeting && !bShiftKeyDown)
 	{
-		// We need to get pawn location to pass it to our Navigation library as argument
 		const APawn* ControlledPawn = GetPawn();
 		if (FollowTime <= ShortPressThreshold && ControlledPawn)
 		{
-			// If that's the case, well then we want to do something different. We want to find a path. We want to create a navigation path, a set of points to follow. For this we can use Navigation Library
 			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
 			{
-				// So first we're going to take our spline and each time we set the spline points, we should clear all the points out that were there before.
 				Spline->ClearSplinePoints();
-				// Then we're going to loop through our path.
 				for (const FVector& PointLoc : NavPath->PathPoints)
 				{
-					// So this is the path that we're concerned with and it starts at the controlled pawns location and it ends at the destination. So we have a set of points that we can add to our spline.
 					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
 				}
-				// So in the case where we would run off into the distance 
-				// actually a case where we had no path points in the array.  
-				// just check for that and only start running if we get at least one path 
-				if(NavPath->PathPoints.Num() > 0)
-				{
-					CachedDestination = NavPath->PathPoints.Last();
-					bAutoRunning = true;
-				}
-				// Our spline will now have points in our path, which means our be auto running boolean should be set to true.
+				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
 				bAutoRunning = true;
 			}
 		}
-		// And we're also no longer holding the mouse button down. That means we should reset our Follow time
 		FollowTime = 0.f;
-		// We should also set our bTargeting Boolean to false.
 		bTargeting = false;
-		// By far all we're doing is adding points to our spine (We are not going to be moving)
-		// We need to set that in Tick Event
 	}
 }
 void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
@@ -151,8 +114,6 @@ void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	{
 		FollowTime += GetWorld()->GetDeltaSeconds();
 		if (CursorHit.bBlockingHit) CachedDestination = CursorHit.ImpactPoint;
-
-
 		if (APawn* ControlledPawn = GetPawn())
 		{
 			const FVector WorldDirection = (CachedDestination - ControlledPawn->GetActorLocation()).GetSafeNormal();
