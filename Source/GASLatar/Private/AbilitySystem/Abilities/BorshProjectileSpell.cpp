@@ -27,7 +27,9 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 	// We can create Interface that returns the socket location in our CombatInterface Class
 
 	// Getting Socket Location
-	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(GetAvatarActorFromActorInfo(), FBorshGameplayTags::Get().Montage_Attack_Weapon);
+	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+		GetAvatarActorFromActorInfo(), 
+		FBorshGameplayTags::Get().CombatSocket_Weapon);
 	// Projectile Rotation
 	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 

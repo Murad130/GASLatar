@@ -7,7 +7,7 @@
 #include "GASLatar/GASLatar.h"
 #include "BorshGameplayTags.h"
 #include "Components/CapsuleComponent.h"
-
+#include "Kismet/GameplayStatics.h"
 
 ABorshCharacterBase::ABorshCharacterBase()
 {
@@ -43,6 +43,8 @@ void ABorshCharacterBase::Die()
 
 void ABorshCharacterBase::MulticastHandleDeath_Implementation()
 {
+	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
+
 	// Ragdoll Weapon
 	Weapon->SetSimulatePhysics(true);
 	Weapon->SetEnableGravity(true);
@@ -70,15 +72,15 @@ FVector ABorshCharacterBase::GetCombatSocketLocation_Implementation(const FGamep
 {
 	// Return correct socket based on MontageTag
 	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_Weapon) && IsValid(Weapon))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_Weapon) && IsValid(Weapon))
 	{
 		return Weapon->GetSocketLocation(WeaponTipSocketName);
 	}
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_LeftHand))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_LeftHand))
 	{
 		return GetMesh()->GetSocketLocation(LeftHandSocketName);
 	}
-	if (MontageTag.MatchesTagExact(GameplayTags.Montage_Attack_RightHand))
+	if (MontageTag.MatchesTagExact(GameplayTags.CombatSocket_RightHand))
 	{
 		return GetMesh()->GetSocketLocation(RightHandSocketName);
 	}
@@ -99,6 +101,23 @@ AActor* ABorshCharacterBase::GetAvatar_Implementation()
 TArray<FTaggedMontage> ABorshCharacterBase::GetAttackMontages_Implementation()
 {
 	return AttackMontages;
+}
+
+UNiagaraSystem* ABorshCharacterBase::GetBloodEffect_Implementation()
+{
+	return BloodEffect;
+}
+
+FTaggedMontage ABorshCharacterBase::GetTaggedMontageByTag_Implementation(const FGameplayTag& MontageTag)
+{
+	for (FTaggedMontage TaggedMontage : AttackMontages)
+	{
+		if (TaggedMontage.MontageTag == MontageTag)
+		{
+			return TaggedMontage;
+		}
+	}
+	return FTaggedMontage();
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()
