@@ -14,7 +14,7 @@ void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 }
 
-void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag)
 {
 	// We're going to spawn a projectile, but only if we're on the server.
 
@@ -29,7 +29,7 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 	// Getting Socket Location
 	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
 		GetAvatarActorFromActorInfo(), 
-		FBorshGameplayTags::Get().CombatSocket_Weapon);
+		SocketTag);
 	// Projectile Rotation
 	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
 
