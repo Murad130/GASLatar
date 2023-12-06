@@ -14,7 +14,7 @@ void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Han
 
 }
 
-void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag)
+void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag, bool bOverridePitch, float PitchOverride)
 {
 	// We're going to spawn a projectile, but only if we're on the server.
 
@@ -32,13 +32,17 @@ void UBorshProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 		SocketTag);
 	// Projectile Rotation
 	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+	if (bOverridePitch)
+	{
+		Rotation.Pitch = PitchOverride;
+	}
 
 	// Now we want to spawn a projectile. But I'm interested in spawning an actor that's going to fly through the air and hit something and apply a gameplay effect. 
 	FTransform SpawnTransform;
 	// Setting SpawnTransform Location
 	SpawnTransform.SetLocation(SocketLocation);
 	SpawnTransform.SetRotation(Rotation.Quaternion());
-
+	
 	ABorshProjectile* Projectile = GetWorld()->SpawnActorDeferred<ABorshProjectile>(
 		ProjectileClass,
 		SpawnTransform,

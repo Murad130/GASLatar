@@ -124,6 +124,21 @@ FTaggedMontage ABorshCharacterBase::GetTaggedMontageByTag_Implementation(const F
 	return FTaggedMontage();
 }
 
+int32 ABorshCharacterBase::GetMinionCount_Implementation()
+{
+	return MinionCount;
+}
+
+void ABorshCharacterBase::IncrementMinionCount_Implementation(int32 Amount)
+{
+	MinionCount += Amount;
+}
+
+void ABorshCharacterBase::DecrementMinionCount_Implementation(int32 Amount)
+{
+	MinionCount -= Amount;
+}
+
 void ABorshCharacterBase::InitAbilityActorInfo()
 {
 
