@@ -88,17 +88,32 @@ void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		{
 			if (UNavigationPath* NavPath = UNavigationSystemV1::FindPathToLocationSynchronously(this, ControlledPawn->GetActorLocation(), CachedDestination))
 			{
+				// So first we're going to take our spline and each time we set the spline points, we should clear all the points out that were there before.
 				Spline->ClearSplinePoints();
+				// Then we're going to loop through our path.
 				for (const FVector& PointLoc : NavPath->PathPoints)
 				{
+					// So this is the path that we're concerned with and it starts at the controlled pawns location and it ends at the destination. So we have a set of points that we can add to our spline.
 					Spline->AddSplinePoint(PointLoc, ESplineCoordinateSpace::World);
 				}
-				CachedDestination = NavPath->PathPoints[NavPath->PathPoints.Num() - 1];
+				// So in the case where we would run off into the distance 
+				// actually a case where we had no path points in the array.  
+				// just check for that and only start running if we get at least one path 
+				if (NavPath->PathPoints.Num() > 0)
+				{
+					CachedDestination = NavPath->PathPoints.Last();
+					bAutoRunning = true;
+				}
+				// Our spline will now have points in our path, which means our be auto running boolean should be set to true.
 				bAutoRunning = true;
 			}
 		}
+		// And we're also no longer holding the mouse button down. That means we should reset our Follow time
 		FollowTime = 0.f;
+		// We should also set our bTargeting Boolean to false.
 		bTargeting = false;
+		// By far all we're doing is adding points to our spine (We are not going to be moving)
+		// We need to set that in Tick Event
 	}
 }
 void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
