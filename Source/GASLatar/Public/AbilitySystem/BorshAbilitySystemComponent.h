@@ -8,6 +8,7 @@
 
 // delegate for broadcasting the asset tags.
 DECLARE_MULTICAST_DELEGATE_OneParam(FEffectAssetTags, const FGameplayTagContainer& /*AssetTags*/);
+DECLARE_MULTICAST_DELEGATE_OneParam(FAbilitiesGiven, UBorshAbilitySystemComponent*);
 
 /**
  * 
@@ -21,9 +22,12 @@ public:
 	void AbilityActorInfoSet();
 
 	FEffectAssetTags EffectAssetTags;
+	FAbilitiesGiven AbilitiesGivenDelegate;
 
 	// Function that we can call to give start up abilities.
 	void AddCharacterAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupAbilities);
+	bool bStartupAbilitiesGiven = false;
+
 	// Function to Activate Abilities (Held and Released Abilities)
 	void AbilityInputTagHeld(const FGameplayTag& InputTag);
 	void AbilityInputTagReleased(const FGameplayTag& InputTag);

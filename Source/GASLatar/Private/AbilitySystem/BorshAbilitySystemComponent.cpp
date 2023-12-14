@@ -31,7 +31,8 @@ void UBorshAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassO
 			// DynamicAbilityTags are designed to be added and removed at runtime so we can change this later is we want to
 		}
 	}
-
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast(this);
 }
 
 void UBorshAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)

@@ -27,6 +27,8 @@ struct FUIWidgetRow : public FTableRowBase
 };
 
 class UBorshUserWidget;
+class UAbilityInfo;
+class UBorshAbilitySystemComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, float, NewValue);
 
@@ -65,9 +67,14 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Widget Data")
+	TObjectPtr<UAbilityInfo> AbilityInfo;
+
 	// function to return any sort of data table row by just taking in a generic data table and a gameplay tag
 	template<typename T>
 	T* GetDataTableRowByTag(UDataTable* DataTable, const FGameplayTag& Tag);
+
+	void OnInitializeStartupAbilities(UBorshAbilitySystemComponent* BorshAbilitiySystemComponent);
 };
 
 template<typename T>
