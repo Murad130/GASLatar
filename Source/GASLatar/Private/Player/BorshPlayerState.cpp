@@ -22,6 +22,7 @@ void ABorshPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABorshPlayerState, Level);
+	DOREPLIFETIME(ABorshPlayerState, XP);
 }
 
 UAbilitySystemComponent* ABorshPlayerState::GetAbilitySystemComponent() const
@@ -29,7 +30,36 @@ UAbilitySystemComponent* ABorshPlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void ABorshPlayerState::AddToXP(int32 InXP)
+{
+	XP += InXP;
+	OnXpChangedDelegate.Broadcast(XP);
+}
+
+void ABorshPlayerState::AddToLevel(int32 InLevel)
+{
+	Level += InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void ABorshPlayerState::SetXP(int32 InXP)
+{
+	XP = InXP;
+	OnXpChangedDelegate.Broadcast(XP);
+}
+
+void ABorshPlayerState::SetLevel(int32 InLevel)
+{
+	Level = InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
 void ABorshPlayerState::OnRep_Level(int32 OldLevel)
 {
+	OnLevelChangedDelegate.Broadcast(Level);
+}
 
+void ABorshPlayerState::OnRep_XP(int32 OldXP)
+{
+	OnXpChangedDelegate.Broadcast(XP);
 }

@@ -17,7 +17,7 @@ class USplineComponent;
 class UDamageTextComponent;
 
 /**
- * 
+ *
  */
 UCLASS()
 class GASLATAR_API ABorshPlayerController : public APlayerController

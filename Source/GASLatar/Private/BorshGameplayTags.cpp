@@ -99,23 +99,23 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 		FString("Input Tag for Right Mouse Button")
 	);
 
-	GameplayTags.InputTag_a = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("InputTag.a"),
+	GameplayTags.InputTag_1 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.1"),
 		FString("Input Tag for a key")
 	);
 
-	GameplayTags.InputTag_z = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("InputTag.z"),
+	GameplayTags.InputTag_2 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.2"),
 		FString("Input Tag for z key")
 	);
 
-	GameplayTags.InputTag_e = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("InputTag.e"),
+	GameplayTags.InputTag_3 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.3"),
 		FString("Input Tag for e key")
 	);
 
-	GameplayTags.InputTag_r = UGameplayTagsManager::Get().AddNativeGameplayTag(
-		FName("InputTag.r"),
+	GameplayTags.InputTag_4 = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("InputTag.4"),
 		FString("Input Tag for r key")
 	);
 
@@ -166,6 +166,15 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 		FString("Resistance to Physical damage")
 	);
 
+	/*
+	*  Meta Attributes
+	*/
+
+	GameplayTags.Attributes_Meta_IncomingXP = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Attributes.Meta.IncomingXP"),
+		FString("Incoming XP Meta Attribute")
+	);
+
 
 	/*
 	*  Map of Damage to Types to Resistance
@@ -202,6 +211,15 @@ void FBorshGameplayTags::InitializeNativeGameplayTags()
 	GameplayTags.Abilities_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
 		FName("Abilities.Fire.FireBolt"),
 		FString("FireBolt Ability Tag")
+	);
+
+	/*
+	*  Cooldown
+	*/
+
+	GameplayTags.Cooldown_Fire_FireBolt = UGameplayTagsManager::Get().AddNativeGameplayTag(
+		FName("Cooldown.Fire.FireBolt"),
+		FString("FireBolt Cooldown Tag")
 	);
 
 	/*

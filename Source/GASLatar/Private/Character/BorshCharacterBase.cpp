@@ -139,6 +139,11 @@ void ABorshCharacterBase::DecrementMinionCount_Implementation(int32 Amount)
 	MinionCount -= Amount;
 }
 
+ECharacterClass ABorshCharacterBase::GetCharacterClass_Implementation()
+{
+	return CharacterClass;
+}
+
 void ABorshCharacterBase::InitAbilityActorInfo()
 {
 
@@ -184,6 +189,7 @@ void ABorshCharacterBase::AddCharacterAbilities()
 	// If we have authority, we'll call the function. But this means we need to access the ability system component and we're going to cast it.
 	
 	BorshASC->AddCharacterAbilities(StartupAbilities);
+	BorshASC->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 
 	// So the question now is when do we call add character abilities (This function)? Well, a good place to call it is in possessed by.
 }

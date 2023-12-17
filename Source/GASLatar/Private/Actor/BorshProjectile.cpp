@@ -1,5 +1,6 @@
 // Copyright Latar
 
+#include "Actor/BorshProjectile.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"

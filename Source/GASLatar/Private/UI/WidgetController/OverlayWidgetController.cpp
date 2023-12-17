@@ -5,6 +5,9 @@
 
 #include <AbilitySystem/BorshAttributeSet.h>
 #include <AbilitySystem/BorshAbilitySystemComponent.h>
+#include "AbilitySystem/Data/AbilityInfo.h"
+#include "AbilitySystem/Data/LevelUpInfo.h"
+#include "Player/BorshPlayerState.h"
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
@@ -19,6 +22,15 @@ void UOverlayWidgetController::BroadcastInitialValues()
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
+	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
+	BorshPlayerState->OnXpChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	BorshPlayerState->OnLevelChangedDelegate.AddLambda(
+		[this](int32 NewLevel)
+		{
+			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
+		}
+	);
+
 	const UBorshAttributeSet* BorshAttributeSet = CastChecked<UBorshAttributeSet>(AttributeSet);
 
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BorshAttributeSet->GetHealthAttribute()).AddLambda(
@@ -98,8 +110,42 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 void UOverlayWidgetController::OnInitializeStartupAbilities(UBorshAbilitySystemComponent* BorshAbilitiySystemComponent)
 {
-	// TODO Get information about all given abilities, look up their Ability Info, and broadcast it to widgets
+	// Get information about all given abilities, look up their Ability Info, and broadcast it to widgets
 	if (!BorshAbilitiySystemComponent->bStartupAbilitiesGiven) return;
+
+	FForEachAbility BroadcastDelegate;
+	BroadcastDelegate.BindLambda([this, BorshAbilitiySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
+	{
+		// Need a way to figure out the ability tag for a given ability spec.
+		FBorshAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(BorshAbilitiySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
+		Info.InputTag = BorshAbilitiySystemComponent->GetInputTagFromSpec(AbilitySpec);
+		AbilityInfoDelegate.Broadcast(Info);
+	});
+	BorshAbilitiySystemComponent->ForEachAbility(BroadcastDelegate);
+}
+
+void UOverlayWidgetController::OnXPChanged(int32 NewXP) const
+{
+	const ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
+	const ULevelUpInfo* LevelUpInfo = BorshPlayerState->LevelUpInfo;
+	checkf(LevelUpInfo, TEXT("Unable to find LevelUpInfo. Please fill out BorshPlayerState Blueprint"));
+
+	const int32 Level = LevelUpInfo->FindLevelForXP(NewXP);
+	const int32 MaxLevel = LevelUpInfo->LevelUpInformation.Num();
+
+	if (Level <= MaxLevel && Level > 0)
+	{
+		const int32 LevelUpRequirement = LevelUpInfo->LevelUpInformation[Level].LevelUpRequirement;
+		const int32 PreviousLevelUpRequirement = LevelUpInfo->LevelUpInformation[Level - 1].LevelUpRequirement;
+
+		const int32 DeltaLevelUpRequirement = LevelUpRequirement - PreviousLevelUpRequirement;
+		const int32 XPForThisLevel = NewXP - PreviousLevelUpRequirement;
+
+		const float XPBarPercent = static_cast<float>(XPForThisLevel) / static_cast<float>(DeltaLevelUpRequirement);
+
+		OnXPPercentChangedDelegate.Broadcast(XPBarPercent);
+	}
+
 }
 
  

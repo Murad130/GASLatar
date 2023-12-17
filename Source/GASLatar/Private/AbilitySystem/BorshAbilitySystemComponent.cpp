@@ -5,6 +5,7 @@
 
 #include "BorshGameplayTags.h"
 #include "AbilitySystem/Abilities/BorshGameplayAbility.h"
+#include "BorshLogChannels.h"
 
 void UBorshAbilitySystemComponent::AbilityActorInfoSet()
 {
@@ -33,6 +34,16 @@ void UBorshAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassO
 	}
 	bStartupAbilitiesGiven = true;
 	AbilitiesGivenDelegate.Broadcast(this);
+}
+
+void UBorshAbilitySystemComponent::AddCharacterPassiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupPassiveAbilities)
+{
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartupPassiveAbilities)
+	{
+		// So how do we grant the abilities ? we need to create an ability spec from each of these classes
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		GiveAbilityAndActivateOnce(AbilitySpec);
+	}
 }
 
 void UBorshAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& InputTag)
@@ -78,6 +89,58 @@ void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& I
 	}
 
 
+}
+
+void UBorshAbilitySystemComponent::ForEachAbility(const FForEachAbility& Delegate)
+{
+	// we have to be careful because abilities can change status. They can become no longer activatable for example, maybe they're blocked by a certain gameplay tag,
+	// So a good practice when looping over this container is to lock that activatable abilities container until this for loop is done and we can do that with F scoped ability list lock
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (!Delegate.ExecuteIfBound(AbilitySpec))
+		{
+			UE_LOG(LogBorsh, Error, TEXT("Failed to execute delegate in %hs"), __FUNCTION__);
+		}
+	}
+}
+
+FGameplayTag UBorshAbilitySystemComponent::GetAbilityTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	if (AbilitySpec.Ability)
+	{
+		for (FGameplayTag Tag : AbilitySpec.Ability.Get()->AbilityTags)
+		{
+			if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Abilities"))))
+			{
+				return Tag;
+			}
+		}
+	}
+	return FGameplayTag();
+}
+
+FGameplayTag UBorshAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	for (FGameplayTag Tag : AbilitySpec.DynamicAbilityTags)
+	{
+		if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("InputTag"))))
+		{
+			return Tag;
+		}
+	}
+	return FGameplayTag();
+}
+
+void UBorshAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+
+	if (!bStartupAbilitiesGiven)
+	{
+		bStartupAbilitiesGiven = true;
+		AbilitiesGivenDelegate.Broadcast(this);
+	}
 }
 
 void UBorshAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent, const FGameplayEffectSpec& EffectSpec, FActiveGameplayEffectHandle ActiveEffectHandle)

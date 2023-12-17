@@ -49,12 +49,16 @@ public:
 	FGameplayTag Attributes_Resistance_Arcane;
 	FGameplayTag Attributes_Resistance_Physical;
 
+	/******************************************META******************************************************/
+
+	FGameplayTag Attributes_Meta_IncomingXP;
+
 	FGameplayTag InputTag_LMB;
 	FGameplayTag InputTag_RMB;
-	FGameplayTag InputTag_a;
-	FGameplayTag InputTag_z;
-	FGameplayTag InputTag_e;
-	FGameplayTag InputTag_r;
+	FGameplayTag InputTag_1;
+	FGameplayTag InputTag_2;
+	FGameplayTag InputTag_3;
+	FGameplayTag InputTag_4;
 
 	FGameplayTag Damage;
 	FGameplayTag Damage_Fire;
@@ -66,6 +70,8 @@ public:
 	FGameplayTag Abilities_Summon;
 
 	FGameplayTag Abilities_Fire_FireBolt;
+
+	FGameplayTag Cooldown_Fire_FireBolt;
 
 	FGameplayTag CombatSocket_Weapon;
 	FGameplayTag CombatSocket_RightHand;
