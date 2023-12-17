@@ -113,15 +113,31 @@ void ABorshCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel)
 void ABorshCharacter::AddToAttributePoints_Implementation(int32 InAttributePoints)
 {
 	// Getting our PlayerState
-	const ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
+	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
 	check(BorshPlayerState);
+	BorshPlayerState->AddToAttributePoints(InAttributePoints);
 }
 
 void ABorshCharacter::AddToSpellPoints_Implementation(int32 InSpellPoints)
 {
 	// Getting our PlayerState
-	const ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
+	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
 	check(BorshPlayerState);
+	BorshPlayerState->AddToSpellPoints(InSpellPoints);
+}
+
+int32 ABorshCharacter::GetAttributePoints_Implementation() const
+{
+	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
+	check(BorshPlayerState);
+	return BorshPlayerState->GetAttributePoints();
+}
+
+int32 ABorshCharacter::GetSpellPoints_Implementation() const
+{
+	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
+	check(BorshPlayerState);
+	return BorshPlayerState->GetSpellPoints();
 }
 
 int32 ABorshCharacter::GetXP_Implementation() const

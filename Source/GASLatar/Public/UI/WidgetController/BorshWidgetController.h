@@ -7,6 +7,8 @@
 #include "AbilitySystemComponent.h"
 #include "BorshWidgetController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature, int32, NewValue);
+
 class UAbilitySystemComponent;
 class UAttributeSet;
 

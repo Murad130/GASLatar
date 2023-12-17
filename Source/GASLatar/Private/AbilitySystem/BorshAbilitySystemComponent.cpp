@@ -4,8 +4,10 @@
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
 
 #include "BorshGameplayTags.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Abilities/BorshGameplayAbility.h"
 #include "BorshLogChannels.h"
+#include "Interaction/PlayerInterface.h"
 
 void UBorshAbilitySystemComponent::AbilityActorInfoSet()
 {
@@ -130,6 +132,31 @@ FGameplayTag UBorshAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAb
 		}
 	}
 	return FGameplayTag();
+}
+
+void UBorshAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+		if (IPlayerInterface::Execute_GetAttributePoints(GetAvatarActor()) > 0)
+		{
+			ServerUpgradeAttribute(AttributeTag);
+		}
+	}
+}
+
+void UBorshAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGameplayTag& AttributeTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = AttributeTag;
+	Payload.EventMagnitude = 1.f;
+
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActor(), AttributeTag, Payload);
+
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+		IPlayerInterface::Execute_AddToAttributePoints(GetAvatarActor(), -1);
+	}
 }
 
 void UBorshAbilitySystemComponent::OnRep_ActivateAbilities()

@@ -3,8 +3,10 @@
 
 #include "UI/WidgetController/AttributeMenuWidgetController.h"
 
+#include "AbilitySystem/BorshAbilitySystemComponent.h"
 #include "AbilitySystem/BorshAttributeSet.h"
 #include "AbilitySystem/Data/AttributeInfo.h"
+#include "Player/BorshPlayerState.h"
 
 
 void UAttributeMenuWidgetController::BindCallbacksToDependencies()
@@ -22,6 +24,15 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 			}	
 		);
 	}
+
+	// bound attributes points and spell points to our player state
+	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
+	BorshPlayerState->OnAttributePointsChangedDelegate.AddLambda(
+		[this](int32 Points)
+		{
+			AttributePointsChangedDelegate.Broadcast(Points);
+		}
+	);
 }
 
 void UAttributeMenuWidgetController::BroadcastInitialValues()
@@ -52,6 +63,14 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 	{
 		BroadcastAttributeInfo(Pair.Key, Pair.Value());
 	}
+	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
+	AttributePointsChangedDelegate.Broadcast(BorshPlayerState->GetAttributePoints());
+}
+
+void UAttributeMenuWidgetController::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	UBorshAbilitySystemComponent* BorshASC = CastChecked<UBorshAbilitySystemComponent>(AbilitySystemComponent);
+	BorshASC->UpgradeAttribute(AttributeTag);
 }
 
 void UAttributeMenuWidgetController::BroadcastAttributeInfo(const FGameplayTag& AttributeTag, const FGameplayAttribute& Attribute) const

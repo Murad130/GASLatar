@@ -240,8 +240,8 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 				IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
 
 				// Fill up Health and Mana
-				SetHealth(GetMaxHealth());
-				SetMana(GetMaxMana());
+				bTopOffHealth = true;
+				bTopOffMana = true;
 
 				IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
 			}
@@ -251,10 +251,26 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	}
 }
 
+void UBorshAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+
+	if (Attribute == GetMaxHealthAttribute() && bTopOffHealth)
+	{
+		SetHealth(GetMaxHealth());
+		bTopOffHealth = false;
+	}
+	if (Attribute == GetMaxManaAttribute() && bTopOffMana)
+	{
+		SetMana(GetMaxMana());
+		bTopOffMana = false;
+	}
+}
+
 void UBorshAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	// So from the attribute set, we're going to get the local player controller that actually has a human player and call this function on it so we can see that damage number.
-		// But we're going to call this function passing in the target character or actor that we want to attach or show this number above.
+	// But we're going to call this function passing in the target character or actor that we want to attach or show this number above.
 	if (Props.SourceCharacter != Props.TargetCharacter)
 	{
 		if (ABorshPlayerController* PC = Cast<ABorshPlayerController>(Props.SourceCharacter->Controller))

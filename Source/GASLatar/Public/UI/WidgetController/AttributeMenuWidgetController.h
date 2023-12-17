@@ -6,11 +6,14 @@
 #include "UI/WidgetController/BorshWidgetController.h"
 #include "AttributeMenuWidgetController.generated.h"
 
-class UAttributeInfo;
-struct FBorshAttributeInfo;
+
 // Declaring delegate to broadcast our Attribute Info Struct
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAttributeInfoSignature, const FBorshAttributeInfo&, Info);
 
+
+class UAttributeInfo;
+struct FBorshAttributeInfo;
+struct FGameplayTag;
 /**
  * 
  */
@@ -29,6 +32,12 @@ public:
 	FAttributeInfoSignature AttributeInfoDelegate;
 	// So we have this delegate. We can broadcast so we can broadcast the value of strength.
 	// We don't need to fill those attributes (With name and description) here because we already have our data asset in Blueprint 
+
+	UPROPERTY(BlueprintAssignable, Category = "GAS|Attributes")
+	FOnAttributeChangedSignature AttributePointsChangedDelegate;
+
+	UFUNCTION(BlueprintCallable)
+	void UpgradeAttribute(const FGameplayTag& AttributeTag);
 
 protected:
 
