@@ -34,7 +34,7 @@ public:
 	// We don't need to fill those attributes (With name and description) here because we already have our data asset in Blueprint 
 
 	UPROPERTY(BlueprintAssignable, Category = "GAS|Attributes")
-	FOnAttributeChangedSignature AttributePointsChangedDelegate;
+	FOnPlayerStatChangedSignature AttributePointsChangedDelegate;
 
 	UFUNCTION(BlueprintCallable)
 	void UpgradeAttribute(const FGameplayTag& AttributeTag);

@@ -13,9 +13,8 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 {
 	// We also need to update the values as they change. So if strength changes, we want to broadcast the latest value of strength up to our widgets so they can update.
 	// We can bind those callbacks/Lambdas here 
-	UBorshAttributeSet* AS = CastChecked<UBorshAttributeSet>(AttributeSet);
 	check(AttributeInfo);
-	for (auto Pair : AS->TagsToAttributes)
+	for (auto Pair : GetBorshAS()->TagsToAttributes)
 	{
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(Pair.Value()).AddLambda(
 			[this, Pair](const FOnAttributeChangeData& Data)
@@ -26,8 +25,8 @@ void UAttributeMenuWidgetController::BindCallbacksToDependencies()
 	}
 
 	// bound attributes points and spell points to our player state
-	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
-	BorshPlayerState->OnAttributePointsChangedDelegate.AddLambda(
+	
+	GetBorshPS()->OnAttributePointsChangedDelegate.AddLambda(
 		[this](int32 Points)
 		{
 			AttributePointsChangedDelegate.Broadcast(Points);
@@ -63,8 +62,7 @@ void UAttributeMenuWidgetController::BroadcastInitialValues()
 	{
 		BroadcastAttributeInfo(Pair.Key, Pair.Value());
 	}
-	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
-	AttributePointsChangedDelegate.Broadcast(BorshPlayerState->GetAttributePoints());
+	AttributePointsChangedDelegate.Broadcast(GetBorshPS()->GetAttributePoints());
 }
 
 void UAttributeMenuWidgetController::UpgradeAttribute(const FGameplayTag& AttributeTag)

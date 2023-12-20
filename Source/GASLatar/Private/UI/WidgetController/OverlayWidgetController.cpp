@@ -11,70 +11,64 @@
 
 void UOverlayWidgetController::BroadcastInitialValues()
 {
-	const UBorshAttributeSet* BorshAttributeSet = CastChecked<UBorshAttributeSet>(AttributeSet);
-
-	OnHealthChanged.Broadcast(BorshAttributeSet->GetHealth());
-	OnMaxHealthChanged.Broadcast(BorshAttributeSet->GetMaxHealth());
-	OnManaChanged.Broadcast(BorshAttributeSet->GetMana());
-	OnMaxManaChanged.Broadcast(BorshAttributeSet->GetMaxMana());
-	
+	OnHealthChanged.Broadcast(GetBorshAS()->GetHealth());
+	OnMaxHealthChanged.Broadcast(GetBorshAS()->GetMaxHealth());
+	OnManaChanged.Broadcast(GetBorshAS()->GetMana());
+	OnMaxManaChanged.Broadcast(GetBorshAS()->GetMaxMana());
 }
 
 void UOverlayWidgetController::BindCallbacksToDependencies()
 {
-	ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
-	BorshPlayerState->OnXpChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
-	BorshPlayerState->OnLevelChangedDelegate.AddLambda(
+	GetBorshPS()->OnXpChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	GetBorshPS()->OnLevelChangedDelegate.AddLambda(
 		[this](int32 NewLevel)
 		{
 			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
 		}
 	);
 
-	const UBorshAttributeSet* BorshAttributeSet = CastChecked<UBorshAttributeSet>(AttributeSet);
-
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BorshAttributeSet->GetHealthAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetBorshAS()->GetHealthAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnHealthChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BorshAttributeSet->GetMaxHealthAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetBorshAS()->GetMaxHealthAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnMaxHealthChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BorshAttributeSet->GetManaAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetBorshAS()->GetManaAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnManaChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BorshAttributeSet->GetMaxManaAttribute()).AddLambda(
+	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(GetBorshAS()->GetMaxManaAttribute()).AddLambda(
 		[this](const FOnAttributeChangeData& Data)
 		{
 			OnMaxManaChanged.Broadcast(Data.NewValue);
 		}
 	);
 
-	if (UBorshAbilitySystemComponent* BorshASC = Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent))
+	if (GetBorshASC())
 	{
 		// Here we check if StartupAbilities have been granted if not we give them to player
-		if (BorshASC->bStartupAbilitiesGiven)
+		if (GetBorshASC()->bStartupAbilitiesGiven)
 		{
-			OnInitializeStartupAbilities(BorshASC);
+			BroadcastAbilityInfo();
 		}
 		else
 		{
-			BorshASC->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::OnInitializeStartupAbilities);
+			GetBorshASC()->AbilitiesGivenDelegate.AddUObject(this, &UOverlayWidgetController::BroadcastAbilityInfo);
 		}
 
 		// this function makes things simplier for us bcs we don't have to go and declare callback functions for all the delegates that we want to bind to.
-		BorshASC->EffectAssetTags.AddLambda/*Anon function (doesn't have a name, not declared and not a member function */(
+		GetBorshASC()->EffectAssetTags.AddLambda/*Anon function (doesn't have a name, not declared and not a member function */(
 			[this](const FGameplayTagContainer& AssetTags)
 			{
 
@@ -105,29 +99,11 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 			}
 		);
 	}
-
 }
 
-void UOverlayWidgetController::OnInitializeStartupAbilities(UBorshAbilitySystemComponent* BorshAbilitiySystemComponent)
+void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 {
-	// Get information about all given abilities, look up their Ability Info, and broadcast it to widgets
-	if (!BorshAbilitiySystemComponent->bStartupAbilitiesGiven) return;
-
-	FForEachAbility BroadcastDelegate;
-	BroadcastDelegate.BindLambda([this, BorshAbilitiySystemComponent](const FGameplayAbilitySpec& AbilitySpec)
-	{
-		// Need a way to figure out the ability tag for a given ability spec.
-		FBorshAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(BorshAbilitiySystemComponent->GetAbilityTagFromSpec(AbilitySpec));
-		Info.InputTag = BorshAbilitiySystemComponent->GetInputTagFromSpec(AbilitySpec);
-		AbilityInfoDelegate.Broadcast(Info);
-	});
-	BorshAbilitiySystemComponent->ForEachAbility(BroadcastDelegate);
-}
-
-void UOverlayWidgetController::OnXPChanged(int32 NewXP) const
-{
-	const ABorshPlayerState* BorshPlayerState = CastChecked<ABorshPlayerState>(PlayerState);
-	const ULevelUpInfo* LevelUpInfo = BorshPlayerState->LevelUpInfo;
+	const ULevelUpInfo* LevelUpInfo = GetBorshPS()->LevelUpInfo;
 	checkf(LevelUpInfo, TEXT("Unable to find LevelUpInfo. Please fill out BorshPlayerState Blueprint"));
 
 	const int32 Level = LevelUpInfo->FindLevelForXP(NewXP);
