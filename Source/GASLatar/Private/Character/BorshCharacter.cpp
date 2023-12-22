@@ -108,6 +108,11 @@ void ABorshCharacter::AddToPlayerLevel_Implementation(int32 InPlayerLevel)
 	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
 	check(BorshPlayerState);
 	BorshPlayerState->AddToLevel(InPlayerLevel);
+
+	if (UBorshAbilitySystemComponent* BorshASC = Cast<UBorshAbilitySystemComponent>(GetAbilitySystemComponent()))
+	{
+		BorshASC->UpdateAbilityStatuses(BorshPlayerState->GetPlayerLevel());
+	}
 }
 
 void ABorshCharacter::AddToAttributePoints_Implementation(int32 InAttributePoints)

@@ -36,6 +36,7 @@ void UBorshWidgetController::BroadcastAbilityInfo()
 		{
 			FBorshAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(GetBorshASC()->GetAbilityTagFromSpec(AbilitySpec));
 			Info.InputTag = GetBorshASC()->GetInputTagFromSpec(AbilitySpec);
+			Info.StatusTag = BorshAbilitySystemComponent->GetStatusFromSpec(AbilitySpec);
 			AbilityInfoDelegate.Broadcast(Info);
 		});
 	GetBorshASC()->ForEachAbility(BroadcastDelegate);

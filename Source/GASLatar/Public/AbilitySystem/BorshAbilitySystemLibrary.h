@@ -10,6 +10,9 @@
 class UOverlayWidgetController;
 class UAttributeMenuWidgetController;
 class UAbilitySystemComponent;
+class USpellMenuWidgetController;
+class UAbilityInfo;
+struct FWidgetControllerParams;
 
 /**
  * 
@@ -21,15 +24,21 @@ class GASLATAR_API UBorshAbilitySystemLibrary : public UBlueprintFunctionLibrary
 	
 public:
 
+	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController", meta = (DefaultToSelf = "WorldContextObject"))
+	static bool MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, ABorshHUD*& OutBorshHUD);
+
 	// Adding a getter for the widget controller
 	// This is a static function and if we're going to trace our way all the way up to the HUD, somehow we need to trace up to the HUD using an object that exists.
 	// But a static function cannot access any objects that exist in the world.
 	// So our get overlay widget controller class needs a world context object, some kind of object that we can use to have context for the world that we're in.
-	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController")
+	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController", meta = (DefaultToSelf = "WorldContextObject"))
 	static UOverlayWidgetController* GetOverlayWidgetController(const UObject* WorldContextObject);
 
-	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController")
+	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController", meta = (DefaultToSelf = "WorldContextObject"))
 	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|WidgetController", meta = (DefaultToSelf = "WorldContextObject"))
+	static USpellMenuWidgetController* GetSpellMenuWidgetController(const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable, Category = "BorshAbilitySystemLibrary|CharacterClassDefaults")
 	static void InitializeDefaultAttributes(const UObject* WorldContextObject, ECharacterClass CharacterClass, float Level, UAbilitySystemComponent* ASC);
@@ -40,6 +49,9 @@ public:
 	// Static function that returns curve table data that we created in Blueprint (CT_DamageCalculationCoefficient)
 	UFUNCTION(BlueprintCallable, Category = "BorshAbilitySystemLibrary|CharacterClassDefaults")
 	static UCharacterClassInfo* GetCharacterClassInfo(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "BorshAbilitySystemLibrary|CharacterClassDefaults")
+	static UAbilityInfo* GetAbilityInfo(const UObject* WorldContextObject);
 
 	// Getters
 	UFUNCTION(BlueprintPure, Category = "BorshAbilitySystemLibrary|GameplayEffects")

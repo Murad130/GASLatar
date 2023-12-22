@@ -2,6 +2,7 @@
 #include "UI/Widget/BorshUserWidget.h"
 #include "UI/WidgetController/AttributeMenuWidgetController.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
+#include "UI/WidgetController/SpellMenuWidgetController.h"
 
 UOverlayWidgetController* ABorshHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
 {
@@ -13,6 +14,7 @@ UOverlayWidgetController* ABorshHUD::GetOverlayWidgetController(const FWidgetCon
 	}
 	return OverlayWidgetController;
 }
+
 UAttributeMenuWidgetController* ABorshHUD::GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams)
 {
 	if (AttributeMenuWidgetController == nullptr)
@@ -22,6 +24,17 @@ UAttributeMenuWidgetController* ABorshHUD::GetAttributeMenuWidgetController(cons
 		AttributeMenuWidgetController->BindCallbacksToDependencies();
 	}
 	return AttributeMenuWidgetController;
+}
+
+USpellMenuWidgetController* ABorshHUD::GetSpellMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (SpellMenuWidgetController == nullptr)
+	{
+		SpellMenuWidgetController = NewObject<USpellMenuWidgetController>(this, SpellMenuWidgetControllerClass);
+		SpellMenuWidgetController->SetWidgetControllerParams(WCParams);
+		SpellMenuWidgetController->BindCallbacksToDependencies();
+	}
+	return SpellMenuWidgetController;
 }
 void ABorshHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)
 {

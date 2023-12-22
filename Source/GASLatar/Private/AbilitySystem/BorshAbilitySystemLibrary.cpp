@@ -11,48 +11,61 @@
 #include "UI/HUD/BorshHUD.h"
 #include <Player/BorshPlayerState.h>
 
-UOverlayWidgetController* UBorshAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
+bool UBorshAbilitySystemLibrary::MakeWidgetControllerParams(const UObject* WorldContextObject, FWidgetControllerParams& OutWCParams, ABorshHUD*& OutBorshHUD)
 {
 	// Here we need to somehow, someway get the widget controller and return it to the caller. 
 	// So how do we do that? Well, we need the player controller. So if we're calling this from within a widget, we're calling it from the perspective of a local player,
 	// A widget will only exist for the local player and we'll want the player controller associated with that
 	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
 	{
-		if (ABorshHUD* BorshHUD = Cast<ABorshHUD>(PC->GetHUD()))
+		OutBorshHUD = Cast<ABorshHUD>(PC->GetHUD());
+		if (OutBorshHUD)
 		{
 			// now we have the HUD we want to call get overlay widget controller on the HUD.
 			// But this getter requires 4 params (right now we have 1 param->PlayerController so first we need those variables
 			ABorshPlayerState* PS = PC->GetPlayerState<ABorshPlayerState>();
 			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
 			UAttributeSet* AS = PS->GetAttributeSet();
-			// So now we have the four key variables.
-			const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
-			// All we need to do now is get our HUD and call get overlay widget controller passing in widget controller params and this function needs to return that overlay widget controller.
-			return BorshHUD->GetOverlayWidgetController(WidgetControllerParams);
+
+			OutWCParams.AttributeSet = AS;
+			OutWCParams.AbilitySystemComponent = ASC;
+			OutWCParams.PlayerState = PS;
+			OutWCParams.PlayerController = PC;
+			return true;
 		}
+	}
+	return false;
+}
+
+UOverlayWidgetController* UBorshAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
+{
+	FWidgetControllerParams WCParams;
+	ABorshHUD* BorshHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD)) // same as || const bool bSuccessfulParams = MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD) and use bSuccessfulParams in if();
+	{
+		return BorshHUD->GetOverlayWidgetController(WCParams);
 	}
 	return nullptr;
 }
 
 UAttributeMenuWidgetController* UBorshAbilitySystemLibrary::GetAttributeMenuWidgetController(const UObject* WorldContextObject)
 {
-	// Here we need to somehow, someway get the widget controller and return it to the caller. 
-	// So how do we do that? Well, we need the player controller. So if we're calling this from within a widget, we're calling it from the perspective of a local player,
-	// A widget will only exist for the local player and we'll want the player controller associated with that
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
+	FWidgetControllerParams WCParams;
+	ABorshHUD* BorshHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD)) // same as || const bool bSuccessfulParams = MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD) and use bSuccessfulParams in if();
 	{
-		if (ABorshHUD* BorshHUD = Cast<ABorshHUD>(PC->GetHUD()))
-		{
-			// now we have the HUD we want to call get overlay widget controller on the HUD.
-			// But this getter requires 4 params (right now we have 1 param->PlayerController so first we need those variables
-			ABorshPlayerState* PS = PC->GetPlayerState<ABorshPlayerState>();
-			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
-			UAttributeSet* AS = PS->GetAttributeSet();
-			// So now we have the four key variables.
-			const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
-			// All we need to do now is get our HUD and call get overlay widget controller passing in widget controller params and this function needs to return that overlay widget controller.
-			return BorshHUD->GetAttributeMenuWidgetController(WidgetControllerParams);
-		}
+		return BorshHUD->GetAttributeMenuWidgetController(WCParams);
+	}
+	return nullptr;
+}
+
+USpellMenuWidgetController* UBorshAbilitySystemLibrary::GetSpellMenuWidgetController(const UObject* WorldContextObject)
+{
+	FWidgetControllerParams WCParams;
+	ABorshHUD* BorshHUD = nullptr;
+	if (MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD)) // same as || const bool bSuccessfulParams = MakeWidgetControllerParams(WorldContextObject, WCParams, BorshHUD) and use bSuccessfulParams in if();
+	{
+		return BorshHUD->GetSpellMenuWidgetController(WCParams);
 	}
 	return nullptr;
 }
@@ -114,9 +127,16 @@ int32 UBorshAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* Wor
 
 UCharacterClassInfo* UBorshAbilitySystemLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
 {
-	ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	const ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
 	if (BorshGameMode == nullptr) return nullptr;
 	return BorshGameMode->CharacterClassInfo;
+}
+
+UAbilityInfo* UBorshAbilitySystemLibrary::GetAbilityInfo(const UObject* WorldContextObject)
+{
+	const ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
+	if (BorshGameMode == nullptr) return nullptr;
+	return BorshGameMode->AbilityInfo;
 }
 
 bool UBorshAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)

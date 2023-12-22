@@ -10,11 +10,11 @@
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
-class IEnemyInterface;
 class UBorshInputConfig;
 class UBorshAbilitySystemComponent;
 class USplineComponent;
 class UDamageTextComponent;
+class IEnemyInterface;
 
 /**
  *
@@ -54,8 +54,8 @@ private:
 	// Keeping track of Hovered enemies
 	void CursorTrace();
 
-	TObjectPtr<IEnemyInterface> LastActor;
-	TObjectPtr<IEnemyInterface> ThisActor;
+	IEnemyInterface* LastActor;
+	IEnemyInterface* ThisActor;
 	FHitResult CursorHit;
 
 	void AbilityInputTagPressed(FGameplayTag InputTag);

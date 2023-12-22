@@ -14,7 +14,7 @@ class UEnemyInterface : public UInterface
 };
 
 /**
- * 
+ *
  */
 class GASLATAR_API IEnemyInterface
 {
