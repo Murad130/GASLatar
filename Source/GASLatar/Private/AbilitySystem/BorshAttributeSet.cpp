@@ -4,6 +4,7 @@
 #include "AbilitySystem/BorshAttributeSet.h"
 
 #include "AbilitySystemBlueprintLibrary.h"
+#include "BorshAbilityTypes.h"
 #include "GameFramework/Character.h"
 #include "GameplayEffectExtension.h"
 #include "Net/UnrealNetwork.h"
@@ -12,6 +13,7 @@
 #include "Interaction/PlayerInterface.h"
 #include "Player/BorshPlayerController.h"
 #include "AbilitySystem/BorshAbilitySystemLibrary.h"
+#include "GameplayEffectComponents/TargetTagsGameplayEffectComponent.h"
 
 UBorshAttributeSet::UBorshAttributeSet()
 {
@@ -167,6 +169,14 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
 
+	if (Props.TargetCharacter->Implements<UCombatInterface>())
+	{
+		if (ICombatInterface::Execute_IsDead(Props.TargetCharacter))
+		{
+			return;
+		}
+	}
+
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		// Setting the value to a clamped value(value from PreAttributeChange)
@@ -180,74 +190,141 @@ void UBorshAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	// Checking to see if the evaluated data has the attribute incoming damage and then we can respond accordingly.
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
 	{
-		// Now incoming damage being a meta attribute should be used for its value and then reset or zeroed out.
-		const float LocalIncomingDamage = GetIncomingDamage();
-		// So we're caching that value locally and then we can set that meta attribute to zero
-		SetIncomingDamage(0.f);
-		// So now that we have local incoming damage, we can decide what to do with it and we should only really do anything if its value isn't zero.
-		if (LocalIncomingDamage > 0.f)
-		{
-			const float NewHealth = GetHealth() - LocalIncomingDamage;
-			// And we can make sure that that is not going to be a negative value.
-			SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
-			// At this point, we can tell certain things about the damage that has been done. For example, if new health is now zero, then we know that this damage caused was fatal.
-			const bool bFatal = NewHealth <= 0.f;
-			if (bFatal)
-			{
-				ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
-				if (CombatInterface)
-				{
-					CombatInterface->Die();
-				}
-				SendXPEvent(Props);
-			}
-			else
-			{
-				// We can activate the ability. but I'd like this Borsh attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
-				// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.
-				FGameplayTagContainer TagContainer;
-				TagContainer.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
-				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
-			}
-
-		
-			const bool bBlock = UBorshAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
-			const bool bCriticalHit = UBorshAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
-			ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCriticalHit);
-		}
+		HandleIncomingDamage(Props);
 	}
 	if (Data.EvaluatedData.Attribute == GetIncomingXPAttribute())
 	{
-		const float LocalIncomingXP = GetIncomingXP();
-		SetIncomingXP(0.f);
+		HandleIncomingXP(Props);
+	}
+}
 
-		// Source Character is the owner, since GA_ListenForEvents applies GE_EventBasedEffect, adding to IncomingXP
-		if (Props.SourceCharacter->Implements<UPlayerInterface>() && Props.SourceCharacter->Implements<UCombatInterface>())
+void UBorshAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
+{
+	// Now incoming damage being a meta attribute should be used for its value and then reset or zeroed out.
+	const float LocalIncomingDamage = GetIncomingDamage();
+	// So we're caching that value locally and then we can set that meta attribute to zero
+	SetIncomingDamage(0.f);
+	// So now that we have local incoming damage, we can decide what to do with it and we should only really do anything if its value isn't zero.
+	if (LocalIncomingDamage > 0.f)
+	{
+		const float NewHealth = GetHealth() - LocalIncomingDamage;
+		// And we can make sure that that is not going to be a negative value.
+		SetHealth(FMath::Clamp(NewHealth, 0.f, GetMaxHealth()));
+		// At this point, we can tell certain things about the damage that has been done. For example, if new health is now zero, then we know that this damage caused was fatal.
+		const bool bFatal = NewHealth <= 0.f;
+		if (bFatal)
 		{
-			// Should we level UP? if yes LevelUp
-			const int32 CurrentLevel = ICombatInterface::Execute_GetPlayerLevel(Props.SourceCharacter);
-			const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceCharacter);
-
-			const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceCharacter, CurrentXP + LocalIncomingXP);
-			const int32 NumOfLevelUps = NewLevel - CurrentLevel;
-			if (NumOfLevelUps > 0)
+			ICombatInterface* CombatInterface = Cast<ICombatInterface>(Props.TargetAvatarActor);
+			if (CombatInterface)
 			{
-				// TODO : Get AttributesPointsReward and SpellPointsReward
-				const int32 AttributePointsReward = IPlayerInterface::Execute_GetAttributesPointsReward(Props.SourceCharacter, CurrentLevel);
-				const int32 SpellPointsReward = IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel);
-				IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumOfLevelUps);
-				IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
-				IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
-
-				// Fill up Health and Mana
-				bTopOffHealth = true;
-				bTopOffMana = true;
-
-				IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
+				FVector Impulse = UBorshAbilitySystemLibrary::GetDeathImpulse(Props.EffectContextHandle);
+				CombatInterface->Die(UBorshAbilitySystemLibrary::GetDeathImpulse(Props.EffectContextHandle));
 			}
-
-			IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
+			SendXPEvent(Props);
 		}
+		else
+		{
+			// We can activate the ability. but I'd like this Borsh attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
+			// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.
+			FGameplayTagContainer TagContainer;
+			TagContainer.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
+			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+
+			const FVector& KnockbackForce = UBorshAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
+			if (!KnockbackForce.IsNearlyZero(1.f))
+			{
+				Props.TargetCharacter->LaunchCharacter(KnockbackForce, true, true);
+			}
+		}
+
+
+		const bool bBlock = UBorshAbilitySystemLibrary::IsBlockedHit(Props.EffectContextHandle);
+		const bool bCriticalHit = UBorshAbilitySystemLibrary::IsCriticalHit(Props.EffectContextHandle);
+		ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCriticalHit);
+		if (UBorshAbilitySystemLibrary::IsSuccessfulDebuff(Props.EffectContextHandle))
+		{
+			Debuff(Props);
+		}
+	}
+}
+
+void UBorshAttributeSet::Debuff(const FEffectProperties& Props)
+{
+	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+	FGameplayEffectContextHandle EffectContext = Props.SourceASC->MakeEffectContext();
+	EffectContext.AddSourceObject(Props.SourceAvatarActor);
+
+	const FGameplayTag DamageType = UBorshAbilitySystemLibrary::GetDamageType(Props.EffectContextHandle);
+	const float DebuffDamage = UBorshAbilitySystemLibrary::GetDebuffDamage(Props.EffectContextHandle);
+	const float DebuffDuration = UBorshAbilitySystemLibrary::GetDebuffDuration(Props.EffectContextHandle);
+	const float DebuffFrequency = UBorshAbilitySystemLibrary::GetDebuffFrequency(Props.EffectContextHandle);
+
+	FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageType.ToString());
+	UGameplayEffect * Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+
+	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
+	Effect->Period = DebuffFrequency;
+	Effect->DurationMagnitude = FScalableFloat(DebuffDuration);
+
+	// Grant Debuff Tag
+	FInheritedTagContainer TagContainer = FInheritedTagContainer();
+	UTargetTagsGameplayEffectComponent& Component = Effect->FindOrAddComponent<UTargetTagsGameplayEffectComponent>();
+	TagContainer.Added.AddTag(GameplayTags.DamageTypesToDebuffs[DamageType]);
+	TagContainer.CombinedTags.AddTag(GameplayTags.DamageTypesToDebuffs[DamageType]);
+	Component.SetAndApplyTargetTagChanges(TagContainer);
+
+	Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
+	Effect->StackLimitCount = 1;
+
+	const int32 Index = Effect->Modifiers.Num();
+	Effect->Modifiers.Add(FGameplayModifierInfo());
+	FGameplayModifierInfo& ModifierInfo = Effect->Modifiers[Index];
+
+	ModifierInfo.ModifierMagnitude = FScalableFloat(DebuffDamage);
+	ModifierInfo.ModifierOp = EGameplayModOp::Additive;
+	ModifierInfo.Attribute = UBorshAttributeSet::GetIncomingDamageAttribute();
+
+	if (FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContext, 1.f))
+	{
+		FBorshGameplayEffectContext* BorshContext = static_cast<FBorshGameplayEffectContext*>(MutableSpec->GetContext().Get());		
+		TSharedPtr<FGameplayTag> DebuffDamageType = MakeShareable(new FGameplayTag(DamageType));
+		BorshContext->SetDamageType(DebuffDamageType);
+
+		Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
+	}
+}
+
+void UBorshAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
+{
+	const float LocalIncomingXP = GetIncomingXP();
+	SetIncomingXP(0.f);
+
+	// Source Character is the owner, since GA_ListenForEvents applies GE_EventBasedEffect, adding to IncomingXP
+	if (Props.SourceCharacter->Implements<UPlayerInterface>() && Props.SourceCharacter->Implements<UCombatInterface>())
+	{
+		// Should we level UP? if yes LevelUp
+		const int32 CurrentLevel = ICombatInterface::Execute_GetPlayerLevel(Props.SourceCharacter);
+		const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceCharacter);
+
+		const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceCharacter, CurrentXP + LocalIncomingXP);
+		const int32 NumOfLevelUps = NewLevel - CurrentLevel;
+		if (NumOfLevelUps > 0)
+		{
+			// TODO : Get AttributesPointsReward and SpellPointsReward
+			const int32 AttributePointsReward = IPlayerInterface::Execute_GetAttributesPointsReward(Props.SourceCharacter, CurrentLevel);
+			const int32 SpellPointsReward = IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel);
+			IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumOfLevelUps);
+			IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
+			IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
+
+			// Fill up Health and Mana
+			bTopOffHealth = true;
+			bTopOffMana = true;
+
+			IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
+		}
+
+		IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
 	}
 }
 
@@ -409,5 +486,6 @@ void UBorshAttributeSet::OnRep_PhysicalResistance(const FGameplayAttributeData& 
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UBorshAttributeSet, PhysicalResistance, OldPhysicalResistance);
 }
+
 
 

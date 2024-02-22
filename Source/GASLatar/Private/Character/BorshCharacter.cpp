@@ -169,6 +169,7 @@ void ABorshCharacter::InitAbilityActorInfo()
 	Cast<UBorshAbilitySystemComponent>(BorshPlayerState->GetAbilitySystemComponent())->AbilityActorInfoSet();
 	AbilitySystemComponent = BorshPlayerState->GetAbilitySystemComponent();
 	AttributeSet = BorshPlayerState->GetAttributeSet();
+	OnAscRegistered.Broadcast(AbilitySystemComponent);
 
 	if (ABorshPlayerController* BorshPlayerController = Cast<ABorshPlayerController>(GetController()))
 	{

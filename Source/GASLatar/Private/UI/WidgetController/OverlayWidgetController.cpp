@@ -3,6 +3,7 @@
 
 #include "UI/WidgetController/OverlayWidgetController.h"
 
+#include "BorshGameplayTags.h"
 #include "AbilitySystem/BorshAttributeSet.h"
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
 #include "AbilitySystem/Data/AbilityInfo.h"
@@ -57,6 +58,7 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 
 	if (GetBorshASC())
 	{
+		GetBorshASC()->AbilityEquipped.AddUObject(this, &UOverlayWidgetController::OnAbilityEquipped);
 		// Here we check if StartupAbilities have been granted if not we give them to player
 		if (GetBorshASC()->bStartupAbilitiesGiven)
 		{
@@ -123,5 +125,26 @@ void UOverlayWidgetController::OnXPChanged(int32 NewXP)
 	}
 
 }
+
+void UOverlayWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot) const
+{
+
+	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+
+	// Fill out Old Slots
+	FBorshAbilityInfo LastSlotInfo;
+	LastSlotInfo.StatusTag = GameplayTags.Abilities_Status_Unlocked;
+	LastSlotInfo.InputTag = PreviousSlot;
+	LastSlotInfo.AbilityTag = GameplayTags.Abilities_None;
+	// Broadcast Empty info if PreviousSlot is a valid slot. Only if equpping on already-equipped spell
+	AbilityInfoDelegate.Broadcast(LastSlotInfo);
+
+	// Fill in New Slots
+	FBorshAbilityInfo Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	Info.StatusTag = Status;
+	Info.InputTag = Slot;
+	AbilityInfoDelegate.Broadcast(Info);
+}
+
 
  

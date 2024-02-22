@@ -4,6 +4,7 @@
 #include "Character/BorshCharacterBase.h"
 #include "AbilitySystemComponent.h"
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
+#include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
 #include "GASLatar/GASLatar.h"
 #include "BorshGameplayTags.h"
 #include "Components/CapsuleComponent.h"
@@ -12,6 +13,12 @@
 ABorshCharacterBase::ABorshCharacterBase()
 {
 	PrimaryActorTick.bCanEverTick = false;
+
+	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+
+	BurnDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("BurnDebuffComponent");
+	BurnDebuffComponent->SetupAttachment(GetRootComponent());
+	BurnDebuffComponent->DebuffTag = GameplayTags.Debuff_Burn;
 
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
@@ -34,14 +41,14 @@ UAnimMontage* ABorshCharacterBase::GetHitReactMontage_Implementation()
 	return HitReactMontage;
 }
 
-void ABorshCharacterBase::Die()
+void ABorshCharacterBase::Die(const FVector& DeathImpluse)
 {
 	// Drop the weapon (Detachment automatically replicated)
 	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
-	MulticastHandleDeath();
+	MulticastHandleDeath(DeathImpluse);
 }
 
-void ABorshCharacterBase::MulticastHandleDeath_Implementation()
+void ABorshCharacterBase::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
 {
 	UGameplayStatics::PlaySoundAtLocation(this, DeathSound, GetActorLocation(), GetActorRotation());
 
@@ -49,17 +56,21 @@ void ABorshCharacterBase::MulticastHandleDeath_Implementation()
 	Weapon->SetSimulatePhysics(true);
 	Weapon->SetEnableGravity(true);
 	Weapon->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
+	Weapon->AddImpulse(DeathImpulse * 0.1f, NAME_None, true);
 
 	// Ragdoll Mesh
 	GetMesh()->SetSimulatePhysics(true);
 	GetMesh()->SetEnableGravity(true);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::PhysicsOnly);
 	GetMesh()->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	GetMesh()->AddImpulse(DeathImpulse, NAME_None, true);
 
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Dissolve();
 	bDead = true;
+	BurnDebuffComponent->Deactivate();
+
 }
 
 void ABorshCharacterBase::BeginPlay()
@@ -142,6 +153,16 @@ void ABorshCharacterBase::DecrementMinionCount_Implementation(int32 Amount)
 ECharacterClass ABorshCharacterBase::GetCharacterClass_Implementation()
 {
 	return CharacterClass;
+}
+
+FOnASCRegistered ABorshCharacterBase::GetOnASCRegisteredDelegate()
+{
+	return OnAscRegistered;
+}
+
+FOnDeath ABorshCharacterBase::GetOnDeathDelegate()
+{
+	return OnDeath;
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()
