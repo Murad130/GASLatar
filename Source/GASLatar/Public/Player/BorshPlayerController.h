@@ -7,6 +7,7 @@
 #include "GameplayTagContainer.h"
 #include "BorshPlayerController.generated.h"
 
+class UNiagaraSystem;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
@@ -87,6 +88,9 @@ private:
 	// so our player doesn't make rough movements
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USplineComponent> Spline; // And if we have a spline component variable, we need to construct that. We do that in the constructor.
+
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<UNiagaraSystem> ClickNiagaraSystem;
 
 	void AutoRun();
 

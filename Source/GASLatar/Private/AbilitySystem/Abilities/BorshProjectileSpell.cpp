@@ -6,7 +6,6 @@
 #include "AbilitySystemComponent.h"
 #include "Actor/BorshProjectile.h"
 #include "Interaction/CombatInterface.h"
-#include "GASLatar/Public/BorshGameplayTags.h"
 
 void UBorshProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, const FGameplayEventData* TriggerEventData)
 {

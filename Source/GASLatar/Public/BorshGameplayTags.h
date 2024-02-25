@@ -114,6 +114,11 @@ public:
 	
 	FGameplayTag Effects_HitReact;
 
+	FGameplayTag Player_Block_InputPressed;
+	FGameplayTag Player_Block_InputHeld;
+	FGameplayTag Player_Block_InputReleased;
+	FGameplayTag Player_Block_CursorTrace;
+
 private:
 	// for a static variable like this, we need to go into the CPP file and explicitly declare the type
 	static FBorshGameplayTags GameplayTags;

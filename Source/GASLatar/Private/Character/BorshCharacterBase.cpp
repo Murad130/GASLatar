@@ -160,9 +160,9 @@ FOnASCRegistered ABorshCharacterBase::GetOnASCRegisteredDelegate()
 	return OnAscRegistered;
 }
 
-FOnDeath ABorshCharacterBase::GetOnDeathDelegate()
+USkeletalMeshComponent* ABorshCharacterBase::GetWeapon_Implementation()
 {
-	return OnDeath;
+	return Weapon;
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()

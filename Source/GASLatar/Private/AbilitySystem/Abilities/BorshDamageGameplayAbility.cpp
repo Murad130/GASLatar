@@ -44,6 +44,11 @@ FDamageEffectParams UBorshDamageGameplayAbility::MakeDamageEffectParamsFromClass
 	return Params;
 }
 
+float UBorshDamageGameplayAbility::GetDamageAtLevel() const
+{
+	return Damage.GetValueAtLevel(GetAbilityLevel());
+}
+
 FTaggedMontage UBorshDamageGameplayAbility::GetRandomTaggedMontageFromArray(const TArray<FTaggedMontage>& TaggedMontages) const
 {
 	if (TaggedMontages.Num() > 0)

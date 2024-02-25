@@ -75,7 +75,6 @@ void UBorshAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& Input
 			}
 		}
 	}
-
 }
 
 void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
@@ -87,13 +86,32 @@ void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& I
 
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  // GetActivatableAbilities returns a array of gameplay ability specs(That can be activated).
 	{
-		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag) && AbilitySpec.IsActive())
 		{
 			AbilitySpecInputReleased(AbilitySpec); 
+			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 		}
 	}
 
 
+}
+
+void UBorshAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
+{
+	if (!InputTag.IsValid()) return;
+
+	
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  
+	{
+		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
+		{
+			AbilitySpecInputPressed(AbilitySpec);
+			if (AbilitySpec.IsActive())
+			{
+				InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputPressed, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
+			}
+		}
+	}
 }
 
 void UBorshAbilitySystemComponent::ForEachAbility(const FForEachAbility& Delegate)
