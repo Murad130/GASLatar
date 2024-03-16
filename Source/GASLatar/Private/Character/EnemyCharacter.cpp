@@ -32,6 +32,7 @@ AEnemyCharacter::AEnemyCharacter()
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>("HealthBar");
 	HealthBar->SetupAttachment(GetRootComponent());
 
+	BaseWalkSpeed = 250.f;
 }
 
 void AEnemyCharacter::PossessedBy(AController* NewController)
@@ -136,11 +137,11 @@ void AEnemyCharacter::HitReactTagChanged(const FGameplayTag CallbackTag, int32 N
 	 }	 
 }
 
-
 void AEnemyCharacter::InitAbilityActorInfo()
 {
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent)->AbilityActorInfoSet();
+	AbilitySystemComponent->RegisterGameplayTagEvent(FBorshGameplayTags::Get().Debuff_Stun, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &AEnemyCharacter::StunTagChanged);
 
 	if (HasAuthority())
 	{
@@ -153,4 +154,16 @@ void AEnemyCharacter::InitializeDefaultAttributes() const
 {
 	UBorshAbilitySystemLibrary::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }
+
+void AEnemyCharacter::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	Super::StunTagChanged(CallbackTag, NewCount);
+
+	if (BorshAIController && BorshAIController->GetBlackboardComponent())
+	{
+		BorshAIController->GetBlackboardComponent()->SetValueAsBool(FName("Stunned"), bIsStunned);
+	}
+}
+
+
 

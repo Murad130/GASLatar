@@ -20,7 +20,7 @@ ABorshProjectile::ABorshProjectile()
 
 	// Now we need to spawn the projectile on the server (to be a replicated actor)
 	bReplicates = true;
-	
+
 	Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
 	SetRootComponent(Sphere);
 	Sphere->SetCollisionObjectType(ECC_Projectile);
@@ -41,6 +41,7 @@ void ABorshProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	SetLifeSpan(LifeSpan);
+	SetReplicateMovement(true);
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &ABorshProjectile::OnSphereOverlap);
 
 	LoopingSoundComponent = UGameplayStatics::SpawnSoundAttached(LoopingSound, GetRootComponent());
@@ -74,8 +75,10 @@ void ABorshProjectile::Destroyed()
 }
 
 void ABorshProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-										UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) 
-{
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{ 
+	if (DamageEffectParams.SourceAbilitySystemComponent == nullptr) return;
+
 	AActor* SourceAvatarActor = DamageEffectParams.SourceAbilitySystemComponent->GetAvatarActor();
 	if (SourceAvatarActor == OtherActor) return; 
 	if (!UBorshAbilitySystemLibrary::IsNotFriend(SourceAvatarActor, OtherActor)) return;

@@ -144,6 +144,7 @@ void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 	{
 		return;
 	}
+
 	if (!InputTag.MatchesTagExact(FBorshGameplayTags::Get().InputTag_LMB))
 	{
 		if (GetASC()) GetASC()->AbilityInputTagHeld(InputTag);

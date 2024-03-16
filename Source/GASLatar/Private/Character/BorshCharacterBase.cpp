@@ -9,6 +9,8 @@
 #include "BorshGameplayTags.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 ABorshCharacterBase::ABorshCharacterBase()
 {
@@ -20,6 +22,10 @@ ABorshCharacterBase::ABorshCharacterBase()
 	BurnDebuffComponent->SetupAttachment(GetRootComponent());
 	BurnDebuffComponent->DebuffTag = GameplayTags.Debuff_Burn;
 
+	StunDebuffComponent = CreateDefaultSubobject<UDebuffNiagaraComponent>("StunDebuffComponent");
+	StunDebuffComponent->SetupAttachment(GetRootComponent());
+	StunDebuffComponent->DebuffTag = GameplayTags.Debuff_Stun;
+
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
@@ -29,6 +35,15 @@ ABorshCharacterBase::ABorshCharacterBase()
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
 	Weapon->SetupAttachment(GetMesh(), FName("WeaponHandSocket"));
 	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void ABorshCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABorshCharacterBase, bIsStunned);
+	DOREPLIFETIME(ABorshCharacterBase, bIsBurned);
+	DOREPLIFETIME(ABorshCharacterBase, bIsBeingShocked);
 }
 
 UAbilitySystemComponent* ABorshCharacterBase::GetAbilitySystemComponent() const
@@ -46,6 +61,11 @@ void ABorshCharacterBase::Die(const FVector& DeathImpluse)
 	// Drop the weapon (Detachment automatically replicated)
 	Weapon->DetachFromComponent(FDetachmentTransformRules(EDetachmentRule::KeepWorld, true));
 	MulticastHandleDeath(DeathImpluse);
+}
+
+FOnDeathSignature& ABorshCharacterBase::GetOnDeathDelegate()
+{
+	return OnDeathDelegate;
 }
 
 void ABorshCharacterBase::MulticastHandleDeath_Implementation(const FVector& DeathImpulse)
@@ -70,6 +90,24 @@ void ABorshCharacterBase::MulticastHandleDeath_Implementation(const FVector& Dea
 	Dissolve();
 	bDead = true;
 	BurnDebuffComponent->Deactivate();
+	StunDebuffComponent->Deactivate();
+	OnDeathDelegate.Broadcast(this);
+
+}
+
+void ABorshCharacterBase::StunTagChanged(const FGameplayTag CallbackTag, int32 NewCount)
+{
+	bIsStunned = NewCount > 0;
+	GetCharacterMovement()->MaxWalkSpeed = bIsStunned ? 0.f : BaseWalkSpeed;
+}
+
+void ABorshCharacterBase::OnRep_Stunned()
+{
+
+}
+
+void ABorshCharacterBase::OnRep_Burned()
+{
 
 }
 
@@ -155,7 +193,7 @@ ECharacterClass ABorshCharacterBase::GetCharacterClass_Implementation()
 	return CharacterClass;
 }
 
-FOnASCRegistered ABorshCharacterBase::GetOnASCRegisteredDelegate()
+FOnASCRegistered& ABorshCharacterBase::GetOnASCRegisteredDelegate()
 {
 	return OnAscRegistered;
 }
@@ -163,6 +201,16 @@ FOnASCRegistered ABorshCharacterBase::GetOnASCRegisteredDelegate()
 USkeletalMeshComponent* ABorshCharacterBase::GetWeapon_Implementation()
 {
 	return Weapon;
+}
+
+bool ABorshCharacterBase::IsBeingShocked_Implementation() const
+{
+	return bIsBeingShocked;
+}
+
+void ABorshCharacterBase::SetIsBeingShocked_Implementation(bool bInShock)
+{
+	bIsBeingShocked = bInShock;
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()

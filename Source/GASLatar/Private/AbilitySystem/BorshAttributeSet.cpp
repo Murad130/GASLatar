@@ -226,9 +226,12 @@ void UBorshAttributeSet::HandleIncomingDamage(const FEffectProperties& Props)
 		{
 			// We can activate the ability. but I'd like this Borsh attribute set to not depend on the enemy class. I don't want it to care what the owner of this is. We just want to activate an ability.
 			// Well, here's how we can do it in a nice generic way. We can activate abilities by ability tag. activate an ability if you have an ability with a specific tag.
-			FGameplayTagContainer TagContainer;
-			TagContainer.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
-			Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			if (Props.TargetCharacter->Implements<UCombatInterface>() && !ICombatInterface::Execute_IsBeingShocked(Props.TargetCharacter))
+			{
+				FGameplayTagContainer TagContainer;
+				TagContainer.AddTag(FBorshGameplayTags::Get().Effects_HitReact);
+				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
+			}
 
 			const FVector& KnockbackForce = UBorshAbilitySystemLibrary::GetKnockbackForce(Props.EffectContextHandle);
 			if (!KnockbackForce.IsNearlyZero(1.f))
@@ -260,18 +263,28 @@ void UBorshAttributeSet::Debuff(const FEffectProperties& Props)
 	const float DebuffFrequency = UBorshAbilitySystemLibrary::GetDebuffFrequency(Props.EffectContextHandle);
 
 	FString DebuffName = FString::Printf(TEXT("DynamicDebuff_%s"), *DamageType.ToString());
-	UGameplayEffect * Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
+	UGameplayEffect* Effect = NewObject<UGameplayEffect>(GetTransientPackage(), FName(DebuffName));
 
 	Effect->DurationPolicy = EGameplayEffectDurationType::HasDuration;
 	Effect->Period = DebuffFrequency;
 	Effect->DurationMagnitude = FScalableFloat(DebuffDuration);
 
-	// Grant Debuff Tag
 	FInheritedTagContainer TagContainer = FInheritedTagContainer();
 	UTargetTagsGameplayEffectComponent& Component = Effect->FindOrAddComponent<UTargetTagsGameplayEffectComponent>();
 	TagContainer.Added.AddTag(GameplayTags.DamageTypesToDebuffs[DamageType]);
 	TagContainer.CombinedTags.AddTag(GameplayTags.DamageTypesToDebuffs[DamageType]);
 	Component.SetAndApplyTargetTagChanges(TagContainer);
+
+	const FGameplayTag DebuffTag = GameplayTags.DamageTypesToDebuffs[DamageType];
+	Effect->InheritableOwnedTagsContainer.AddTag(DebuffTag);
+	if (DebuffTag.MatchesTagExact(GameplayTags.Debuff_Stun))
+	{
+		Effect->InheritableOwnedTagsContainer.AddTag(GameplayTags.Player_Block_CursorTrace);
+		Effect->InheritableOwnedTagsContainer.AddTag(GameplayTags.Player_Block_InputHeld);
+		Effect->InheritableOwnedTagsContainer.AddTag(GameplayTags.Player_Block_InputPressed);
+		Effect->InheritableOwnedTagsContainer.AddTag(GameplayTags.Player_Block_InputReleased);
+	}
+
 
 	Effect->StackingType = EGameplayEffectStackingType::AggregateBySource;
 	Effect->StackLimitCount = 1;
@@ -286,10 +299,9 @@ void UBorshAttributeSet::Debuff(const FEffectProperties& Props)
 
 	if (FGameplayEffectSpec* MutableSpec = new FGameplayEffectSpec(Effect, EffectContext, 1.f))
 	{
-		FBorshGameplayEffectContext* BorshContext = static_cast<FBorshGameplayEffectContext*>(MutableSpec->GetContext().Get());		
+		FBorshGameplayEffectContext* BorshContext = static_cast<FBorshGameplayEffectContext*>(MutableSpec->GetContext().Get());
 		TSharedPtr<FGameplayTag> DebuffDamageType = MakeShareable(new FGameplayTag(DamageType));
 		BorshContext->SetDamageType(DebuffDamageType);
-
 		Props.TargetASC->ApplyGameplayEffectSpecToSelf(*MutableSpec);
 	}
 }
@@ -310,10 +322,18 @@ void UBorshAttributeSet::HandleIncomingXP(const FEffectProperties& Props)
 		const int32 NumOfLevelUps = NewLevel - CurrentLevel;
 		if (NumOfLevelUps > 0)
 		{
-			// TODO : Get AttributesPointsReward and SpellPointsReward
-			const int32 AttributePointsReward = IPlayerInterface::Execute_GetAttributesPointsReward(Props.SourceCharacter, CurrentLevel);
-			const int32 SpellPointsReward = IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel);
 			IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumOfLevelUps);
+
+			// TODO : Get AttributesPointsReward and SpellPointsReward
+			int32 AttributePointsReward  = 0;
+			int32 SpellPointsReward = 0;
+
+			for (int32 i = 0; i < NumOfLevelUps; ++i)
+			{
+				SpellPointsReward += IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel + i);
+				AttributePointsReward += IPlayerInterface::Execute_GetAttributePointsReward(Props.SourceCharacter, CurrentLevel + i);
+			}
+
 			IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
 			IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
 

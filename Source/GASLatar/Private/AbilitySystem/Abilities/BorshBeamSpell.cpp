@@ -57,6 +57,14 @@ void UBorshBeamSpell::TraceFirstTarget(const FVector& BeamTargetLocation)
 			}
 		}
 	}
+
+	if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(MouseHitActor))
+	{
+		if (!CombatInterface->GetOnDeathDelegate().IsAlreadyBound(this, &UBorshBeamSpell::PrimaryTargetDied))
+		{
+			CombatInterface->GetOnDeathDelegate().AddDynamic(this, &UBorshBeamSpell::PrimaryTargetDied);
+		}
+	}
 }
 
 void UBorshBeamSpell::StoreAdditionalTargets(TArray<AActor*>& OutAdditionalTargets)
@@ -73,8 +81,23 @@ void UBorshBeamSpell::StoreAdditionalTargets(TArray<AActor*>& OutAdditionalTarge
 		850.f,
 		MouseHitActor->GetActorLocation());
 
-	//int32 NumAdditionalTargets = FMath::Min(GetAbilityLevel() - 1, MaxNumShockTargets);
-	int32 NumAdditionalTargets = 5;
+	int32 NumAdditionalTargets = FMath::Min(GetAbilityLevel() - 1, MaxNumShockTargets);
+	//int32 NumAdditionalTargets = 5;
 
-	UBorshAbilitySystemLibrary::GetClosestTargets(NumAdditionalTargets, OverlappingActors, OutAdditionalTargets, MouseHitActor->GetActorLocation());
+	UBorshAbilitySystemLibrary::GetClosestTargets(
+		NumAdditionalTargets, 
+		OverlappingActors, 
+		OutAdditionalTargets, 
+		MouseHitActor->GetActorLocation());
+
+	for (AActor* Target : OutAdditionalTargets)
+	{
+		if (ICombatInterface* CombatInterface = Cast<ICombatInterface>(Target))
+		{
+			if (!CombatInterface->GetOnDeathDelegate().IsAlreadyBound(this, &UBorshBeamSpell::AdditionalTargetDied))
+			{
+				CombatInterface->GetOnDeathDelegate().AddDynamic(this, &UBorshBeamSpell::AdditionalTargetDied);
+			}
+		}
+	}
 }

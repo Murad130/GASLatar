@@ -6,9 +6,11 @@
 #include "AbilitySystem/Data/LevelUpInfo.h"
 #include "Player/BorshPlayerState.h"
 #include "NiagaraComponent.h"
+#include "AbilitySystem/Debuff/DebuffNiagaraComponent.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "UI/HUD/BorshHUD.h"
+#include "BorshGameplayTags.h"
 #include "Player/BorshPlayerController.h"
 
 ABorshCharacter::ABorshCharacter()
@@ -86,7 +88,7 @@ int32 ABorshCharacter::FindLevelForXP_Implementation(int32 InXP) const
 	return BorshPlayerState->LevelUpInfo->FindLevelForXP(InXP);
 }
 
-int32 ABorshCharacter::GetAttributesPointsReward_Implementation(int32 Level) const
+int32 ABorshCharacter::GetAttributePointsReward_Implementation(int32 Level) const
 {
 	// Getting our PlayerState
 	const ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
@@ -161,6 +163,42 @@ int32 ABorshCharacter::GetPlayerLevel_Implementation()
 	return BorshPlayerState->GetPlayerLevel();
 
 }
+
+void ABorshCharacter::OnRep_Stunned()
+{
+	if (UBorshAbilitySystemComponent* BorshASC = Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent))
+	{
+		const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+		FGameplayTagContainer BlockedTags;
+		BlockedTags.AddTag(GameplayTags.Player_Block_CursorTrace);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputHeld);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputPressed);
+		BlockedTags.AddTag(GameplayTags.Player_Block_InputReleased);
+		if (bIsStunned)
+		{
+			BorshASC->AddLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Activate();
+		}
+		else
+		{
+			BorshASC->RemoveLooseGameplayTags(BlockedTags);
+			StunDebuffComponent->Deactivate();
+		}
+	}
+}
+
+void ABorshCharacter::OnRep_Burned()
+{
+	if (bIsBurned)
+	{
+		BurnDebuffComponent->Activate();
+	}
+	else
+	{
+		BurnDebuffComponent->Deactivate();
+	}
+}
+
 void ABorshCharacter::InitAbilityActorInfo()
 {
 	ABorshPlayerState* BorshPlayerState = GetPlayerState<ABorshPlayerState>();
@@ -170,6 +208,7 @@ void ABorshCharacter::InitAbilityActorInfo()
 	AbilitySystemComponent = BorshPlayerState->GetAbilitySystemComponent();
 	AttributeSet = BorshPlayerState->GetAttributeSet();
 	OnAscRegistered.Broadcast(AbilitySystemComponent);
+	AbilitySystemComponent->RegisterGameplayTagEvent(FBorshGameplayTags::Get().Debuff_Stun, EGameplayTagEventType::NewOrRemoved).AddUObject(this, &ABorshCharacter::StunTagChanged);
 
 	if (ABorshPlayerController* BorshPlayerController = Cast<ABorshPlayerController>(GetController()))
 	{
