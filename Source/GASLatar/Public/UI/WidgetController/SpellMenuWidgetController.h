@@ -43,7 +43,7 @@ public:
 	FWaitForEquipSelectionSignature StopWaitingForEquipDelegate;
 
 	UPROPERTY(BlueprintAssignable)
-	FSpellGlobeReassignedSignature FSpellGlobeReassignedDelegate;
+	FSpellGlobeReassignedSignature SpellGlobeReassignedDelegate;
 
 	UFUNCTION(BlueprintCallable)
 	void SpellGlobeSelected(const FGameplayTag& AbilityTag);
@@ -68,7 +68,7 @@ private:
 	FSelectedAbility SelectedAbility = { FBorshGameplayTags::Get().Abilities_None, FBorshGameplayTags::Get().Abilities_Status_Locked };
 	int32 CurrentSpellPoints = 0;
 
-	bool bWaitingForEquipeSelection = false;
+	bool bWaitingForEquipSelection = false;
 
 	FGameplayTag SelectedSlot;
 

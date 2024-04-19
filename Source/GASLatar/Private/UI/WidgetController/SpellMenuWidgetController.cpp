@@ -11,23 +11,23 @@ void USpellMenuWidgetController::BroadcastInitialValues()
 {
 	BroadcastAbilityInfo();
 	SpellPointsChanged.Broadcast(GetBorshPS()->GetSpellPoints());
-	
+
 }
 
 void USpellMenuWidgetController::BindCallbacksToDependencies()
 {
 	GetBorshASC()->AbilityStatusChanged.AddLambda([this](const FGameplayTag& AbilityTag, const FGameplayTag& StatusTag, int32 NewLevel)
-	{
+		{
 			if (SelectedAbility.Ability.MatchesTagExact(AbilityTag))
 			{
 				SelectedAbility.Status = StatusTag;
 				bool bEnableSpendPoints = false;
-				bool bEnbaleEquip = false;
-				ShouldEnableButtons(StatusTag, CurrentSpellPoints, bEnableSpendPoints, bEnbaleEquip);
+				bool bEnableEquip = false;
+				ShouldEnableButtons(StatusTag, CurrentSpellPoints, bEnableSpendPoints, bEnableEquip);
 				FString Description;
 				FString NextLevelDescription;
 				GetBorshASC()->GetDescriptionsByAbilityTag(AbilityTag, Description, NextLevelDescription);
-				SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnbaleEquip, Description, NextLevelDescription);
+				SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description, NextLevelDescription);
 			}
 
 			if (AbilityInfo)
@@ -36,7 +36,7 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 				Info.StatusTag = StatusTag;
 				AbilityInfoDelegate.Broadcast(Info);
 			}
-	});
+		});
 
 	GetBorshASC()->AbilityEquipped.AddUObject(this, &USpellMenuWidgetController::OnAbilityEquipped);
 
@@ -46,23 +46,22 @@ void USpellMenuWidgetController::BindCallbacksToDependencies()
 			CurrentSpellPoints = SpellPoints;
 
 			bool bEnableSpendPoints = false;
-			bool bEnbaleEquip = false;
-			ShouldEnableButtons(SelectedAbility.Status, CurrentSpellPoints, bEnableSpendPoints, bEnbaleEquip);
+			bool bEnableEquip = false;
+			ShouldEnableButtons(SelectedAbility.Status, CurrentSpellPoints, bEnableSpendPoints, bEnableEquip);
 			FString Description;
 			FString NextLevelDescription;
 			GetBorshASC()->GetDescriptionsByAbilityTag(SelectedAbility.Ability, Description, NextLevelDescription);
-			SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnbaleEquip, Description, NextLevelDescription);
-
+			SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description, NextLevelDescription);
 		});
 }
 
 void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityTag)
 {
-	if (bWaitingForEquipeSelection)
+	if (bWaitingForEquipSelection)
 	{
 		const FGameplayTag SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType;
 		StopWaitingForEquipDelegate.Broadcast(SelectedAbilityType);
-		bWaitingForEquipeSelection = false;
+		bWaitingForEquipSelection = false;
 	}
 
 	const FBorshGameplayTags GameplayTags = FBorshGameplayTags::Get();
@@ -86,13 +85,12 @@ void USpellMenuWidgetController::SpellGlobeSelected(const FGameplayTag& AbilityT
 	SelectedAbility.Ability = AbilityTag;
 	SelectedAbility.Status = AbilityStatus;
 	bool bEnableSpendPoints = false;
-	bool bEnbaleEquip = false;
-	ShouldEnableButtons(AbilityStatus, SpellPoints, bEnableSpendPoints, bEnbaleEquip);
+	bool bEnableEquip = false;
+	ShouldEnableButtons(AbilityStatus, SpellPoints, bEnableSpendPoints, bEnableEquip);
 	FString Description;
 	FString NextLevelDescription;
 	GetBorshASC()->GetDescriptionsByAbilityTag(AbilityTag, Description, NextLevelDescription);
-	SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnbaleEquip, Description, NextLevelDescription);
-
+	SpellGlobeSelectedDelegate.Broadcast(bEnableSpendPoints, bEnableEquip, Description, NextLevelDescription);
 }
 
 void USpellMenuWidgetController::SpendPointButtonPressed()
@@ -105,11 +103,11 @@ void USpellMenuWidgetController::SpendPointButtonPressed()
 
 void USpellMenuWidgetController::GlobeDeselect()
 {
-	if (bWaitingForEquipeSelection)
+	if (bWaitingForEquipSelection)
 	{
 		const FGameplayTag SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
 		StopWaitingForEquipDelegate.Broadcast(SelectedAbilityType);
-		bWaitingForEquipeSelection = false;
+		bWaitingForEquipSelection = false;
 	}
 
 	SelectedAbility.Ability = FBorshGameplayTags::Get().Abilities_None;
@@ -123,18 +121,18 @@ void USpellMenuWidgetController::EquipButtonPressed()
 	const FGameplayTag AbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
 
 	WaitForEquipDelegate.Broadcast(AbilityType);
-	bWaitingForEquipeSelection = true; 
+	bWaitingForEquipSelection = true;
 
 	const FGameplayTag SelectedStatus = GetBorshASC()->GetStatusFromAbilityTag(SelectedAbility.Ability);
 	if (SelectedStatus.MatchesTagExact(FBorshGameplayTags::Get().Abilities_Status_Equipped))
 	{
-		SelectedSlot = GetBorshASC()->GetInputTagFromAbilityTag(SelectedAbility.Ability);
+		SelectedSlot = GetBorshASC()->GetSlotFromAbilityTag(SelectedAbility.Ability);
 	}
 }
 
 void USpellMenuWidgetController::SpellRowGlobePressed(const FGameplayTag& SlotTag, const FGameplayTag& AbilityType)
 {
-	if (!bWaitingForEquipeSelection) return;
+	if (!bWaitingForEquipSelection) return;
 	// Check selected ability against the slot's ability type. 
 	// (don't equip an offensive spell in a passive slot and vice versa)
 	const FGameplayTag& SelectedAbilityType = AbilityInfo->FindAbilityInfoForTag(SelectedAbility.Ability).AbilityType;
@@ -145,7 +143,7 @@ void USpellMenuWidgetController::SpellRowGlobePressed(const FGameplayTag& SlotTa
 
 void USpellMenuWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTag, const FGameplayTag& Status, const FGameplayTag& Slot, const FGameplayTag& PreviousSlot)
 {
-	bWaitingForEquipeSelection = false;
+	bWaitingForEquipSelection = false;
 
 	const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
 
@@ -164,7 +162,7 @@ void USpellMenuWidgetController::OnAbilityEquipped(const FGameplayTag& AbilityTa
 	AbilityInfoDelegate.Broadcast(Info);
 
 	StopWaitingForEquipDelegate.Broadcast(AbilityInfo->FindAbilityInfoForTag(AbilityTag).AbilityType);
-	FSpellGlobeReassignedDelegate.Broadcast(AbilityTag);
+	SpellGlobeReassignedDelegate.Broadcast(AbilityTag);
 	GlobeDeselect();
 }
 

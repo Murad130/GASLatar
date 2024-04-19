@@ -47,6 +47,7 @@ void UBorshAbilitySystemComponent::AddCharacterPassiveAbilities(const TArray<TSu
 	{
 		// So how do we grant the abilities ? we need to create an ability spec from each of these classes
 		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		AbilitySpec.DynamicAbilityTags.AddTag(FBorshGameplayTags::Get().Abilities_Status_Equipped);
 		GiveAbilityAndActivateOnce(AbilitySpec);
 	}
 }
@@ -60,6 +61,7 @@ void UBorshAbilitySystemComponent::AbilityInputTagHeld(const FGameplayTag& Input
 
 	// After that I want to check to see if this ability system component has any activatable abilities with this input tag.
 	// So how do we do that? Well, we have a function that contains all of our activatable abilities.
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  // GetActivatableAbilities returns a array of gameplay ability specs(That can be activated).
 	{
 		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
@@ -84,11 +86,12 @@ void UBorshAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& I
 
 	if (!InputTag.IsValid()) return;
 
+	FScopedAbilityListLock ActiveScopeLoc(*this);
 	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  // GetActivatableAbilities returns a array of gameplay ability specs(That can be activated).
 	{
 		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag) && AbilitySpec.IsActive())
 		{
-			AbilitySpecInputReleased(AbilitySpec); 
+			AbilitySpecInputReleased(AbilitySpec);
 			InvokeReplicatedEvent(EAbilityGenericReplicatedEvent::InputReleased, AbilitySpec.Handle, AbilitySpec.ActivationInfo.GetActivationPredictionKey());
 		}
 	}
@@ -100,8 +103,8 @@ void UBorshAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& In
 {
 	if (!InputTag.IsValid()) return;
 
-	
-	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())  
+	FScopedAbilityListLock ActiveScopeLoc(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
 	{
 		if (AbilitySpec.DynamicAbilityTags.HasTagExact(InputTag))
 		{
@@ -176,13 +179,73 @@ FGameplayTag UBorshAbilitySystemComponent::GetStatusFromAbilityTag(const FGamepl
 	return FGameplayTag();
 }
 
-FGameplayTag UBorshAbilitySystemComponent::GetInputTagFromAbilityTag(const FGameplayTag& AbilityTag)
+FGameplayTag UBorshAbilitySystemComponent::GetSlotFromAbilityTag(const FGameplayTag& AbilityTag)
 {
 	if (const FGameplayAbilitySpec* Spec = GetSpecFromAbilityTag(AbilityTag))
 	{
 		return GetInputTagFromSpec(*Spec);
 	}
 	return FGameplayTag();
+}
+
+bool UBorshAbilitySystemComponent::SlotIsEmpty(const FGameplayTag& Slot)
+{
+	// We need to figure out whether or not a given input tag iss occupied with a gameplay ability. How do we know that.
+	// Well, we're going to need to check all of the gameplay abilities in our activatable abilities.
+	FScopedAbilityListLock ActiveScopeLoc(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		// I need to know if this particular ability spec has a slot, right?
+		if (AbilityHasSlot(AbilitySpec, Slot))
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+bool UBorshAbilitySystemComponent::AbilityHasSlot(const FGameplayAbilitySpec& Spec, const FGameplayTag& Slot)
+{
+	return Spec.DynamicAbilityTags.HasTagExact(Slot);
+}
+
+bool UBorshAbilitySystemComponent::AbilityHasAnySlot(const FGameplayAbilitySpec& Spec)
+{
+	// Returns true if it has any slot no matter what it is 
+	return Spec.DynamicAbilityTags.HasTag(FGameplayTag::RequestGameplayTag(FName("InputTag")));
+}
+
+FGameplayAbilitySpec* UBorshAbilitySystemComponent::GetSpecWithSlot(const FGameplayTag& Slot)
+{
+	// And how are we going to return the correct spec? Well, we need to loop through the abilities and see which one has this spec.
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		// We need to check in each abilities ability tags and its dynamic ability tags, and we want to see if it has this given slot.
+		if (AbilitySpec.DynamicAbilityTags.HasTagExact(Slot))
+		{
+			return &AbilitySpec;
+		}
+	}
+	return nullptr;
+}
+
+bool UBorshAbilitySystemComponent::IsPassiveAbility(const FGameplayAbilitySpec& Spec) const
+{
+	// Our Ability Type(passive or offensive) is in AbilityInfo so we need to get the AbilityInfo if we want to check an ability type.
+	const UAbilityInfo* AbilityInfo = UBorshAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
+	const FGameplayTag AbilityTag = GetAbilityTagFromSpec(Spec);
+	// Now what we need here is the ability info struct that we can get from ability info.
+	const FBorshAbilityInfo& Info = AbilityInfo->FindAbilityInfoForTag(AbilityTag);
+	const FGameplayTag AbilityType = Info.AbilityType;
+	return AbilityType.MatchesTagExact(FBorshGameplayTags::Get().Abilities_Type_Passive);
+}
+
+void UBorshAbilitySystemComponent::AssignSlotToAbility(FGameplayAbilitySpec& Spec, const FGameplayTag& Slot)
+{
+	// So assigned slot to ability is going to first of all remove its input tag if it has one, and then assign it a new slot.
+	ClearSlot(&Spec);
+	Spec.DynamicAbilityTags.AddTag(Slot);
 }
 
 FGameplayAbilitySpec* UBorshAbilitySystemComponent::GetSpecFromAbilityTag(const FGameplayTag& AbilityTag)
@@ -229,7 +292,7 @@ void UBorshAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const F
 void UBorshAbilitySystemComponent::UpdateAbilityStatuses(int32 Level)
 {
 	UAbilityInfo* AbilityInfo = UBorshAbilitySystemLibrary::GetAbilityInfo(GetAvatarActor());
-	for (const FBorshAbilityInfo Info : AbilityInfo->AbilityInformation)
+	for (const FBorshAbilityInfo& Info : AbilityInfo->AbilityInformation)
 	{
 		if (!Info.AbilityTag.IsValid()) continue;
 		if (Level < Info.LevelRequirement) continue;
@@ -258,7 +321,7 @@ void UBorshAbilitySystemComponent::ServerSpendSpellPoint_Implementation(const FG
 		if (Status.MatchesTagExact(GameplayTags.Abilities_Status_Eligible))
 		{
 			AbilitySpec->DynamicAbilityTags.RemoveTag(GameplayTags.Abilities_Status_Eligible);
-			AbilitySpec->DynamicAbilityTags.RemoveTag(GameplayTags.Abilities_Status_Unlocked);
+			AbilitySpec->DynamicAbilityTags.AddTag(GameplayTags.Abilities_Status_Unlocked);
 			Status = GameplayTags.Abilities_Status_Unlocked;
 		}
 		else if (Status.MatchesTagExact(GameplayTags.Abilities_Status_Equipped) || Status.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
@@ -274,24 +337,58 @@ void UBorshAbilitySystemComponent::ServerEquipAbility_Implementation(const FGame
 {
 	if (FGameplayAbilitySpec* AbilitySpec = GetSpecFromAbilityTag(AbilityTag))
 	{
+		// Now the first thing we're doing is we're getting our gameplay tags.
 		const FBorshGameplayTags& GameplayTags = FBorshGameplayTags::Get();
+		// We're storing the previous slot, but this is actually the previous slot in a sense of what slot did 
+		// this particular ability have before before we went in and changed things.
 		const FGameplayTag& PrevSlot = GetInputTagFromSpec(*AbilitySpec);
+		// Same as Slot
 		const FGameplayTag& Status = GetStatusFromSpec(*AbilitySpec);
 
 		const bool bStatusValid = Status == GameplayTags.Abilities_Status_Equipped || Status == GameplayTags.Abilities_Status_Unlocked;
 		if (bStatusValid)
 		{
-			// Remove this InputTag (slot) from any Ability that has it .
-			ClearAbilitiesOfSlot(Slot);
-			// Clear this ability's slot, just in case, it's a different slot
-			ClearSlot(AbilitySpec);
-			// Now, assign this ability to this slot
-			AbilitySpec->DynamicAbilityTags.AddTag(Slot);
-			if (Status.MatchesTagExact(GameplayTags.Abilities_Status_Unlocked))
+			// Handle Activation/Deactivation for passive abilities
+
+			if (!SlotIsEmpty(Slot)) // There is an Ability in this slot Already. Deactivate and clear its slot.
 			{
-				AbilitySpec->DynamicAbilityTags.RemoveTag(GameplayTags.Abilities_Status_Unlocked);
-				AbilitySpec->DynamicAbilityTags.AddTag(GameplayTags.Abilities_Status_Equipped);
+				// We also need to know what ability is there so we can deactivate it, at least if it's a passive ability.
+				// And if we want to deactivate the ability, it would help if we knew which one it was so we can identify it with the ability spec.
+				// For now we know that the slot we're trying to occupy is already occupied.
+				FGameplayAbilitySpec* SpecWithSlot = GetSpecWithSlot(Slot);
+				// And this is the ability sitting in that slot that we want to push out. But it could be a nullptr so we are making sure that it is not
+				if (SpecWithSlot)
+				{
+					// is that ability the same as this ability ? If so, we can return early.
+					if (AbilityTag.MatchesTagExact(GetAbilityTagFromSpec(*SpecWithSlot)))
+					{
+						ClientEquipAbility(AbilityTag, GameplayTags.Abilities_Status_Equipped, Slot, PrevSlot);
+						return;
+					}
+
+					if (IsPassiveAbility(*SpecWithSlot))
+					{
+						// If the spec with slot is PassiveAbility that means we need to deactivate it when pushing it out from slot 
+						// So how are we gonna do it ? We made a delegate FDeactivatePassiveAbility. And our passive abilities all bind to this.
+						// So we can broadcast the ability tag through this, and all of our passive abilities will respond to it and check that tag.
+						DeactivatePassiveAbility.Broadcast(GetAbilityTagFromSpec(*SpecWithSlot));
+						// So this is going to result in our passive ability with this tag ending itself.
+					}
+					// after we've deactivated the passive ability, whether or not it's passive, we still want to clear the slot so it doesn't have that input tag anymore.
+					ClearSlot(SpecWithSlot);
+				}
 			}
+			// This takes care of the case where slot is not empty. So what do we do when we've passed that point?
+			// Now we need to put our new ability in that slot. This ability could be passive(if passive we need to activate it if it's not already active.)
+			if (!AbilityHasAnySlot(*AbilitySpec)) // Ability doesn't yet have a slot (it's not active)
+			{
+				if (IsPassiveAbility(*AbilitySpec))
+				{
+					TryActivateAbility(AbilitySpec->Handle);
+				}
+			}
+			// Now that takes care of activating it. But what about its input tag ? It now needs to have a tag. So we need a function to assign a slot to an ability.
+			AssignSlotToAbility(*AbilitySpec, Slot);
 			MarkAbilitySpecDirty(*AbilitySpec);
 		}
 		ClientEquipAbility(AbilityTag, GameplayTags.Abilities_Status_Equipped, Slot, PrevSlot);
@@ -331,7 +428,6 @@ void UBorshAbilitySystemComponent::ClearSlot(FGameplayAbilitySpec* Spec)
 {
 	const FGameplayTag Slot = GetInputTagFromSpec(*Spec);
 	Spec->DynamicAbilityTags.RemoveTag(Slot);
-	MarkAbilitySpecDirty(*Spec);
 }
 
 void UBorshAbilitySystemComponent::ClearAbilitiesOfSlot(const FGameplayTag& Slot)
