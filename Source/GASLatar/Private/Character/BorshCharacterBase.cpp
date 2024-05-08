@@ -46,6 +46,13 @@ void ABorshCharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(ABorshCharacterBase, bIsBeingShocked);
 }
 
+float ABorshCharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	const float DamageTaken = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	OnDamageDelegate.Broadcast(DamageTaken);
+	return DamageTaken;
+}
+
 UAbilitySystemComponent* ABorshCharacterBase::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
@@ -211,6 +218,11 @@ bool ABorshCharacterBase::IsBeingShocked_Implementation() const
 void ABorshCharacterBase::SetIsBeingShocked_Implementation(bool bInShock)
 {
 	bIsBeingShocked = bInShock;
+}
+
+FOnDamageSignature& ABorshCharacterBase::GetOnDamageSignature()
+{
+	return OnDamageDelegate;
 }
 
 void ABorshCharacterBase::InitAbilityActorInfo()

@@ -9,6 +9,9 @@
 #include "NavigationSystem.h"
 #include "NiagaraFunctionLibrary.h"
 #include "AbilitySystem/BorshAbilitySystemComponent.h"
+#include "Actor/MagicCircle.h"
+#include "GASLatar/GASLatar.h"
+#include "Components/DecalComponent.h"
 #include "Components/SplineComponent.h"
 #include "Input/BorshInputComponent.h"
 #include "Interaction/EnemyInterface.h"
@@ -20,11 +23,13 @@ ABorshPlayerController::ABorshPlayerController()
 	bReplicates = true;
 	Spline = CreateDefaultSubobject<USplineComponent>("Spline");
 }
+
 void ABorshPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 	CursorTrace();
 	AutoRun();
+	UpdateMagicCircleLocation();
 }
 
 void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit)
@@ -38,6 +43,7 @@ void ABorshPlayerController::ShowDamageNumber_Implementation(float DamageAmount,
 		DamageText->SetDamageText(DamageAmount, bBlockedHit, bCriticalHit);
 	}
 }
+
 void ABorshPlayerController::AutoRun()
 {
 	if (!bAutoRunning) return;
@@ -53,6 +59,15 @@ void ABorshPlayerController::AutoRun()
 		}
 	}
 }
+
+void ABorshPlayerController::UpdateMagicCircleLocation()
+{
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->SetActorLocation(CursorHit.ImpactPoint);
+	}
+}
+
 void ABorshPlayerController::CursorTrace()
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FBorshGameplayTags::Get().Player_Block_CursorTrace))
@@ -63,16 +78,21 @@ void ABorshPlayerController::CursorTrace()
 		LastActor = nullptr;
 		return;
 	}
-	GetHitResultUnderCursor(ECC_Visibility, false, CursorHit);
+
+	const ECollisionChannel TraceChannel = IsValid(MagicCircle) ? ECC_ExcludePlayers : ECC_Visibility;
+	GetHitResultUnderCursor(TraceChannel, false, CursorHit);
 	if (!CursorHit.bBlockingHit) return;
+
 	LastActor = ThisActor;
 	ThisActor = Cast<IEnemyInterface>(CursorHit.GetActor());
+
 	if (LastActor != ThisActor)
 	{
 		if (LastActor) LastActor->UnHighlightActor();
 		if (ThisActor) ThisActor->HighlightActor();
 	}
 }
+
 void ABorshPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FBorshGameplayTags::Get().Player_Block_InputPressed))
@@ -86,6 +106,7 @@ void ABorshPlayerController::AbilityInputTagPressed(FGameplayTag InputTag)
 	}
 	if (GetASC()) GetASC()->AbilityInputTagPressed(InputTag);
 }
+
 void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FBorshGameplayTags::Get().Player_Block_InputReleased))
@@ -138,6 +159,7 @@ void ABorshPlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 		// We need to set that in Tick Event
 	}
 }
+
 void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FBorshGameplayTags::Get().Player_Block_InputHeld))
@@ -165,6 +187,7 @@ void ABorshPlayerController::AbilityInputTagHeld(FGameplayTag InputTag)
 		}
 	}
 }
+
 UBorshAbilitySystemComponent* ABorshPlayerController::GetASC()
 {
 	if (BorshAbilitySystemComponent == nullptr)
@@ -173,6 +196,27 @@ UBorshAbilitySystemComponent* ABorshPlayerController::GetASC()
 	}
 	return BorshAbilitySystemComponent;
 }
+
+void ABorshPlayerController::ShowMagicCircle(UMaterialInterface* DecalMaterial)
+{
+	if (!IsValid(MagicCircle))
+	{
+		MagicCircle = GetWorld()->SpawnActor<AMagicCircle>(MagicCircleClass);
+		if (DecalMaterial)
+		{
+			MagicCircle->MagicCircleDecal->SetMaterial(0, DecalMaterial);
+		}
+	}
+}
+
+void ABorshPlayerController::HideMagicCircle()
+{
+	if (IsValid(MagicCircle))
+	{
+		MagicCircle->Destroy();
+	}
+}
+
 void ABorshPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -189,6 +233,7 @@ void ABorshPlayerController::BeginPlay()
 	InputModeData.SetHideCursorDuringCapture(false);
 	SetInputMode(InputModeData);
 }
+
 void ABorshPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -198,6 +243,7 @@ void ABorshPlayerController::SetupInputComponent()
 	BorshInputComponent->BindAction(ShiftAction, ETriggerEvent::Completed, this, &ABorshPlayerController::ShiftReleased);
 	BorshInputComponent->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, &ThisClass::AbilityInputTagHeld);
 }
+
 void ABorshPlayerController::Move(const FInputActionValue& InputActionValue)
 {
 	if (GetASC() && GetASC()->HasMatchingGameplayTag(FBorshGameplayTags::Get().Player_Block_InputPressed))

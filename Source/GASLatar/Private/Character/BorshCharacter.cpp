@@ -164,6 +164,24 @@ int32 ABorshCharacter::GetPlayerLevel_Implementation()
 
 }
 
+void ABorshCharacter::ShowMagicCircle_Implementation(UMaterialInterface* DecalMaterial)
+{
+	if (ABorshPlayerController* BorshPlayerController = Cast<ABorshPlayerController>(GetController()))
+	{
+		BorshPlayerController->ShowMagicCircle(DecalMaterial);
+		BorshPlayerController->bShowMouseCursor = false;
+	}
+}
+
+void ABorshCharacter::HideMagicCircle_Implementation()
+{
+	if (ABorshPlayerController* BorshPlayerController = Cast<ABorshPlayerController>(GetController()))
+	{
+		BorshPlayerController->HideMagicCircle();
+		BorshPlayerController->bShowMouseCursor = true;
+	}
+}
+
 void ABorshCharacter::OnRep_Stunned()
 {
 	if (UBorshAbilitySystemComponent* BorshASC = Cast<UBorshAbilitySystemComponent>(AbilitySystemComponent))

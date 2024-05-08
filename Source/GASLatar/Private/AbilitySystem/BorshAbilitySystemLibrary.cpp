@@ -127,6 +127,45 @@ int32 UBorshAbilitySystemLibrary::GetXPRewardForClassAndLevel(const UObject* Wor
 	return static_cast<int32>(XPReward);
 }
 
+void UBorshAbilitySystemLibrary::SetIsRadialDamageEffectParam(UPARAM(ref)FDamageEffectParams& DamageEffectParams, bool bIsRadial, float InnerRadius, float OuterRadius, FVector Origin)
+{
+	DamageEffectParams.bIsRadialDamage = bIsRadial;
+	DamageEffectParams.RadialDamageInnerRadius = InnerRadius;
+	DamageEffectParams.RadialDamageOuterRadius = OuterRadius;
+	DamageEffectParams.RadialDamageOrigin = Origin;
+}
+
+void UBorshAbilitySystemLibrary::SetKnockbackDirection(UPARAM(ref)FDamageEffectParams& DamageEffectParams, FVector KnockbackDirection, float Magnitude)
+{
+	KnockbackDirection.Normalize();
+	if (Magnitude == 0.f)
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * DamageEffectParams.KnockbackForceMagnitude;
+	}
+	else
+	{
+		DamageEffectParams.KnockbackForce = KnockbackDirection * Magnitude;
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetDeathImpulseDirection(UPARAM(ref)FDamageEffectParams& DamageEffectParams, FVector ImpulseDirection, float Magnitude)
+{
+	ImpulseDirection.Normalize();
+	if (Magnitude == 0.f)
+	{
+		DamageEffectParams.DeathImpulse = ImpulseDirection * DamageEffectParams.DeathImpulseMagnitude;
+	}
+	else
+	{
+		DamageEffectParams.DeathImpulse = ImpulseDirection * Magnitude;
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetTargetEffectParamsASC(UPARAM(ref)FDamageEffectParams& DamageEffectParams, UAbilitySystemComponent* InASC)
+{
+	DamageEffectParams.TargetAbilitySystemComponent = InASC;
+}
+
 UCharacterClassInfo* UBorshAbilitySystemLibrary::GetCharacterClassInfo(const UObject* WorldContextObject)
 {
 	const ABorshGameModeBase* BorshGameMode = Cast<ABorshGameModeBase>(UGameplayStatics::GetGameMode(WorldContextObject));
@@ -225,6 +264,42 @@ bool UBorshAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandl
 	return false;
 }
 
+bool UBorshAbilitySystemLibrary::IsRadialDamage(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->IsRadialDamage();
+	}
+	return false;
+}
+
+float UBorshAbilitySystemLibrary::GetRadialDamageInnerRadius(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->GetRadialDamageInnerRadius();
+	}
+	return 0.f;
+}
+
+float UBorshAbilitySystemLibrary::GetRadialDamageOuterRadius(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->GetRadialDamageOuterRadius();
+	}
+	return 0.f;
+}
+
+FVector UBorshAbilitySystemLibrary::GetRadialDamageOrigin(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FBorshGameplayEffectContext* BorshEffectContext = static_cast<const FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return BorshEffectContext->GetRadialDamageOrigin();
+	}
+	return FVector::ZeroVector;
+}
+
 void UBorshAbilitySystemLibrary::SetIsBlockedHit(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit)
 {
 	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
@@ -298,6 +373,38 @@ void UBorshAbilitySystemLibrary::SetKnockbackForce(UPARAM(ref)FGameplayEffectCon
 	}
 }
 
+void UBorshAbilitySystemLibrary::SetIsRadialDamage(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, bool bInIsRadialDamage)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetIsRadialDamage(bInIsRadialDamage);
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetRadialDamageInnerRadius(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, float InInnerRadius)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetRadialDamageInnerRadius(InInnerRadius);
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetRadialDamageOuterRadius(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, float InOuterRadius)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetRadialDamageOuterRadius(InOuterRadius);
+	}
+}
+
+void UBorshAbilitySystemLibrary::SetRadialDamageOrigin(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, const FVector& InOrigin)
+{
+	if (FBorshGameplayEffectContext* BorshEffectContext = static_cast<FBorshGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		BorshEffectContext->SetRadialDamageOrigin(InOrigin);
+	}
+}
+
 void UBorshAbilitySystemLibrary::GetLivePlayersWithinRadius(const UObject* WorldContextObject, TArray<AActor*>& OutOverlappingActors, const TArray<AActor*>& ActorsToIgnore, float Radius, const FVector& SphereOrigin)
 {
 	// We need to perform a check for a sphere in the world and get all actors inside of that sphere
@@ -366,6 +473,12 @@ FGameplayEffectContextHandle UBorshAbilitySystemLibrary::ApplyDamageEffect(const
 	EffectContexthandle.AddSourceObject(SourceAvatarActor);
 	SetDeathImpulse(EffectContexthandle, DamageEffectParams.DeathImpulse);
 	SetKnockbackForce(EffectContexthandle, DamageEffectParams.KnockbackForce);
+
+	SetIsRadialDamage(EffectContexthandle, DamageEffectParams.bIsRadialDamage);
+	SetRadialDamageInnerRadius(EffectContexthandle, DamageEffectParams.RadialDamageInnerRadius);
+	SetRadialDamageOuterRadius(EffectContexthandle, DamageEffectParams.RadialDamageOuterRadius);
+	SetRadialDamageOrigin(EffectContexthandle, DamageEffectParams.RadialDamageOrigin);
+
 	const FGameplayEffectSpecHandle SpecHandle = DamageEffectParams.SourceAbilitySystemComponent->MakeOutgoingSpec(DamageEffectParams.DamageGameplayEffectClass, DamageEffectParams.AbilityLevel, EffectContexthandle);
 
 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageEffectParams.DamageType, DamageEffectParams.BaseDamage);
